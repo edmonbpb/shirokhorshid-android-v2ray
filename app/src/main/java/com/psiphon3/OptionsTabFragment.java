@@ -25,6 +25,7 @@ import com.psiphon3.psiphonlibrary.RegionListPreference;
 import com.psiphon3.psiphonlibrary.TunnelServiceInteractor;
 import com.psiphon3.psiphonlibrary.UpstreamProxySettings;
 import com.psiphon3.psiphonlibrary.Utils;
+import com.psiphon3.psiphonlibrary.V2RayPreferenceActivity;
 import com.psiphon3.psiphonlibrary.VpnAppsUtils;
 import com.psiphon3.psiphonlibrary.VpnOptionsPreferenceActivity;
 
@@ -43,6 +44,7 @@ public class OptionsTabFragment extends PsiphonPreferenceFragmentCompat {
     private static final int REQUEST_CODE_VPN_PREFERENCES = 100;
     private static final int REQUEST_CODE_PROXY_PREFERENCES = 101;
     private static final int REQUEST_CODE_MORE_PREFERENCES = 102;
+    private static final int REQUEST_CODE_V2RAY_PREFERENCES = 103;
 
     private RegionListPreference regionListPreference;
     private Preference vpnOptionsPreference;
@@ -103,6 +105,16 @@ public class OptionsTabFragment extends PsiphonPreferenceFragmentCompat {
             if (activity != null && !activity.isFinishing()) {
                 startActivityForResult(new Intent(getActivity(),
                         ProxyOptionsPreferenceActivity.class), REQUEST_CODE_PROXY_PREFERENCES);
+            }
+            return true;
+        });
+
+        Preference v2rayOptionsPreference = findPreference(getContext().getString(R.string.v2rayOptionsPreferenceKey));
+        v2rayOptionsPreference.setOnPreferenceClickListener(__ -> {
+            final FragmentActivity activity = getActivity();
+            if (activity != null && !activity.isFinishing()) {
+                startActivityForResult(new Intent(getActivity(),
+                        V2RayPreferenceActivity.class), REQUEST_CODE_V2RAY_PREFERENCES);
             }
             return true;
         });

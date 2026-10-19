@@ -311,6 +311,14 @@ android {
         abortOnError false
     }
 
+    // The Xray helper is packaged as libxraycore.so and executed from
+    // nativeLibraryDir, so the installer must extract native libraries.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
     def propFile = rootProject.file('signing.properties')
     compileOptions {
         sourceCompatibility = '1.8'

@@ -448,6 +448,7 @@ public class TunnelManager implements PsiphonTunnel.HostService, VpnManager.VpnS
         }
 
         stopAndWaitForTunnel();
+        V2RayManager.stop();
         m_compositeDisposable.dispose();
         // Unregister host service for the VPN manager
         m_vpnManager.unregisterHostService();
@@ -1165,6 +1166,17 @@ public class TunnelManager implements PsiphonTunnel.HostService, VpnManager.VpnS
         sendDataTransferStatsHandler.postDelayed(sendDataTransferStats, sendDataTransferStatsIntervalMs);
 
         try {
+            boolean v2rayEnabled = V2RayConfigStore.isFeatureEnabled(getContext());
+            android.util.Log.i("V2Ray", "runTunnel: feature enabled=" + v2rayEnabled);
+            if (v2rayEnabled) {
+                try {
+                    V2RayManager.start(getContext());
+                } catch (V2RayManager.V2RayException e) {
+                    // Fail closed: never fall back to a direct connection when V2Ray was requested.
+                    MyLog.e(R.string.v2ray_start_failed, MyLog.Sensitivity.NOT_SENSITIVE, e.getMessage());
+                    return;
+                }
+            }
             m_vpnManager.setShareProxyOnNetwork(m_tunnelConfig.shareProxyOnNetwork);
             m_vpnManager.vpnEstablish();
             MyLog.i(R.string.vpn_service_running, MyLog.Sensitivity.NOT_SENSITIVE);
@@ -1207,6 +1219,7 @@ public class TunnelManager implements PsiphonTunnel.HostService, VpnManager.VpnS
             m_isRoutingThroughTunnelPublishRelay.accept(false);
             m_vpnManager.vpnTeardown();
             m_tunnel.stop();
+            V2RayManager.stop();
 
             sendDataTransferStatsHandler.removeCallbacks(sendDataTransferStats);
             DataTransferStats.getDataTransferStatsForService().stop();
@@ -1269,6 +1282,9 @@ public class TunnelManager implements PsiphonTunnel.HostService, VpnManager.VpnS
 
         Context context = getContext();
         PackageManager pm = context.getPackageManager();
+        // The Xray child shares the app UID and does not call VpnService.protect, so the app
+        // itself must stay outside the VPN while it carries the upstream connection.
+        boolean xrayUpstream = V2RayManager.isRunning();
 
         // Reset VPN config state
         m_tunnelState.vpnApps.clear();
@@ -1336,13 +1352,17 @@ public class TunnelManager implements PsiphonTunnel.HostService, VpnManager.VpnS
                     // Also always include the Psiphon app itself in this mode
                     // Note that we are not checking if the app is installed here, we trust that self is always installed
                     // and log a warning if it is not (should never happen)
-                    try {
-                        vpnBuilder.addAllowedApplication(context.getPackageName());
-                        m_tunnelState.vpnApps.add(context.getPackageName());
-                        MyLog.i(R.string.individual_app_included, MyLog.Sensitivity.SENSITIVE_FORMAT_ARGS,
-                                context.getPackageName());
-                    } catch (PackageManager.NameNotFoundException e) {
-                        MyLog.w("TunnelManager: VpnBuilder: failed to add self to allowed VPN applications, package not found");
+                    if (xrayUpstream) {
+                        MyLog.i(R.string.v2ray_app_outside_vpn, MyLog.Sensitivity.NOT_SENSITIVE);
+                    } else {
+                        try {
+                            vpnBuilder.addAllowedApplication(context.getPackageName());
+                            m_tunnelState.vpnApps.add(context.getPackageName());
+                            MyLog.i(R.string.individual_app_included, MyLog.Sensitivity.SENSITIVE_FORMAT_ARGS,
+                                    context.getPackageName());
+                        } catch (PackageManager.NameNotFoundException e) {
+                            MyLog.w("TunnelManager: VpnBuilder: failed to add self to allowed VPN applications, package not found");
+                        }
                     }
                 } else {
                     // If there are no apps to include, set the exclusion mode to ALL_APPS
@@ -1415,6 +1435,11 @@ public class TunnelManager implements PsiphonTunnel.HostService, VpnManager.VpnS
                 break;
         }
 
+        if (xrayUpstream
+                && vpnAppsExclusionSetting == VpnAppsUtils.VpnAppsExclusionSetting.EXCLUDE_APPS) {
+            excludeSelfFromVpn(vpnBuilder, context);
+        }
+
         // If we are in ALL_APPS mode then disallow apps that should not be tunneled by default if the device supports
         // VPN exclusions.
         if (vpnAppsExclusionSetting == VpnAppsUtils.VpnAppsExclusionSetting.ALL_APPS) {
@@ -1450,7 +1475,22 @@ public class TunnelManager implements PsiphonTunnel.HostService, VpnManager.VpnS
             }
         }
 
+        if (xrayUpstream
+                && vpnAppsExclusionSetting == VpnAppsUtils.VpnAppsExclusionSetting.ALL_APPS) {
+            excludeSelfFromVpn(vpnBuilder, context);
+        }
+
         return vpnBuilder;
+    }
+
+    private void excludeSelfFromVpn(Builder vpnBuilder, Context context) {
+        try {
+            vpnBuilder.addDisallowedApplication(context.getPackageName());
+            MyLog.i(R.string.individual_app_excluded, MyLog.Sensitivity.SENSITIVE_FORMAT_ARGS,
+                    context.getPackageName());
+        } catch (PackageManager.NameNotFoundException e) {
+            MyLog.w("TunnelManager: VpnBuilder: failed to add self to disallowed VPN applications, package not found");
+        }
     }
 
     /**
@@ -1833,7 +1873,16 @@ public class TunnelManager implements PsiphonTunnel.HostService, VpnManager.VpnS
             json.put("ExchangeObfuscationKey", EmbeddedValues.SERVER_ENTRY_EXCHANGE_OBFUSCATION_KEY);
 
             if (useUpstreamProxy) {
-                if (UpstreamProxySettings.getUseHTTPProxy(context)) {
+                String v2rayProxyUrl = V2RayManager.getUpstreamProxyUrl();
+                if (v2rayProxyUrl != null) {
+                    json.put("UpstreamProxyUrl", v2rayProxyUrl);
+                } else if (!temporaryTunnel && V2RayConfigStore.isFeatureEnabled(context)) {
+                    // Fail closed: the main tunnel must never fall back to a direct connection
+                    // when the user selected V2Ray as its upstream.
+                    MyLog.e(R.string.v2ray_start_failed, MyLog.Sensitivity.NOT_SENSITIVE,
+                            "the Xray core is not running");
+                    return null;
+                } else if (UpstreamProxySettings.getUseHTTPProxy(context)) {
                     if (UpstreamProxySettings.getProxySettings(context) != null) {
                         json.put("UpstreamProxyUrl", UpstreamProxySettings.getUpstreamProxyUrl(context));
                     }

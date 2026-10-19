@@ -256,4 +256,35 @@
   <string name="conduit_fallback_timeout">Conduit‌های شیر و خورشید پس از %s پاسخ ندادند</string>
   <string name="conduit_fallback_trying_public">در حال تلاش با Conduit‌های عمومی\u2026</string>
   <string name="conduit_mode_status">حالت Conduit: %s</string>
+
+  <string name="label_v2ray_settings">V2Ray</string>
+  <string name="v2ray_enabled_title">اتصال از طریق V2Ray</string>
+  <string name="v2ray_enabled_summary_on">ترافیک سرورها از کانفیگ V2Ray شما عبور می‌کند</string>
+  <string name="v2ray_enabled_summary_off">خاموش: برنامه از روش‌های اتصال خودش استفاده می‌کند</string>
+  <string name="v2ray_enabled_summary_needs_config">هنوز کانفیگی نیست: با روشن بودن این گزینه، برنامه وصل نمی‌شود</string>
+  <string name="v2ray_reconnect_hint">برای اعمال تغییرات، قطع و دوباره وصل کنید</string>
+  <string name="v2ray_active_config_title">کانفیگ فعال</string>
+  <string name="v2ray_no_config">بدون کانفیگ</string>
+  <string name="v2ray_add_paste_title">افزودن از حافظه</string>
+  <string name="v2ray_add_paste_summary">JSON، لینک یا متن اشتراک را بچسبانید</string>
+  <string name="v2ray_add_file_title">افزودن از فایل</string>
+  <string name="v2ray_add_file_summary">یک فایل JSON یا متنی انتخاب کنید</string>
+  <string name="v2ray_delete_title">حذف کانفیگ</string>
+  <string name="v2ray_delete_confirm">این کانفیگ حذف شود؟</string>
+  <string name="v2ray_delete_summary">کانفیگ انتخاب‌شده را پاک می‌کند</string>
+  <string name="v2ray_test_title">تست کانفیگ</string>
+  <string name="v2ray_test_summary">یک اتصال واقعی با این کانفیگ را امتحان می‌کند</string>
+  <string name="v2ray_test_ok">کانفیگ با موفقیت وصل شد</string>
+  <string name="v2ray_test_failed">کانفیگ وصل نشد</string>
+  <string name="v2ray_show_log_title">نمایش لاگ</string>
+  <string name="v2ray_show_log_summary">خطوط آخر هستهٔ Xray</string>
+  <string name="v2ray_core_version_title">نسخهٔ هسته</string>
+  <string name="v2ray_core_version_summary">نسخهٔ Xray را نشان می‌دهد</string>
+  <string name="v2ray_add_dialog_title">کانفیگ را بچسبانید</string>
+  <string name="v2ray_import_ok">کانفیگ اضافه شد</string>
+  <string name="v2ray_import_failed">کانفیگ اضافه نشد: %1$s</string>
+  <string name="v2ray_no_active_config_test">اول یک کانفیگ انتخاب کنید</string>
+  <string name="v2ray_start_failed">V2Ray نتوانست شروع شود: %1$s</string>
+  <string name="v2ray_not_configured">V2Ray روشن است ولی کانفیگی انتخاب نشده</string>
+  <string name="v2ray_app_outside_vpn">V2Ray فعال است: خود برنامه بیرون از VPN می‌ماند</string>
 </resources>
