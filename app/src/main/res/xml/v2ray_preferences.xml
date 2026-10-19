@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <SwitchPreferenceCompat
+        android:icon="@drawable/baseline_device_hub_white_24"
+        android:key="v2ray_enabled"
+        android:persistent="false"
+        android:title="@string/v2ray_enabled_title" />
+    <ListPreference
+        android:icon="@drawable/baseline_device_hub_white_24"
+        android:key="v2ray_active_config"
+        android:persistent="false"
+        android:summary="@string/v2ray_no_config"
+        android:title="@string/v2ray_active_config_title" />
+    <Preference
+        android:key="v2ray_add_paste"
+        android:summary="@string/v2ray_add_paste_summary"
+        android:title="@string/v2ray_add_paste_title" />
+    <Preference
+        android:key="v2ray_add_file"
+        android:summary="@string/v2ray_add_file_summary"
+        android:title="@string/v2ray_add_file_title" />
+    <Preference
+        android:key="v2ray_delete_config"
+        android:summary="@string/v2ray_delete_summary"
+        android:title="@string/v2ray_delete_title" />
+    <Preference
+        android:key="v2ray_test_config"
+        android:summary="@string/v2ray_test_summary"
+        android:title="@string/v2ray_test_title" />
+    <Preference
+        android:key="v2ray_show_log"
+        android:summary="@string/v2ray_show_log_summary"
+        android:title="@string/v2ray_show_log_title" />
+    <Preference
+        android:key="v2ray_core_version"
+        android:summary="@string/v2ray_core_version_summary"
+        android:title="@string/v2ray_core_version_title" />
+</PreferenceScreen>
