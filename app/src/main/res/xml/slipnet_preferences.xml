@@ -1,0 +1,44 @@
+<!-- Derived from SlipNet (github.com/anonvector/SlipNet), AGPL-3.0. -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <Preference
+        android:key="slipnet_status"
+        android:persistent="false"
+        android:selectable="false"
+        android:summary="@string/slipnet_profile_empty"
+        android:title="@string/slipnet_status_title" />
+    <Preference
+        android:key="slipnet_paste_link"
+        android:persistent="false"
+        android:summary="@string/slipnet_paste_summary_empty"
+        android:title="@string/slipnet_paste_title" />
+    <Preference
+        android:key="slipnet_edit"
+        android:persistent="false"
+        android:summary="@string/slipnet_mode_summary"
+        android:title="@string/slipnet_mode_title" />
+    <Preference
+        android:key="slipnet_resolvers"
+        android:persistent="false"
+        android:summary="@string/slipnet_resolvers_summary"
+        android:title="@string/slipnet_resolvers_title" />
+    <Preference
+        android:key="slipnet_run_test"
+        android:persistent="false"
+        android:summary="@string/slipnet_test_summary"
+        android:title="@string/slipnet_test_title" />
+    <Preference
+        android:key="slipnet_scanner"
+        android:persistent="false"
+        android:summary="@string/slipnet_scanner_summary"
+        android:title="@string/label_slipnet_scanner" />
+    <Preference
+        android:key="slipnet_logs"
+        android:persistent="false"
+        android:summary="@string/slipnet_logs_summary"
+        android:title="@string/label_slipnet_logs" />
+    <Preference
+        android:key="slipnet_clear_link"
+        android:persistent="false"
+        android:summary="@string/slipnet_clear_summary"
+        android:title="@string/slipnet_clear_title" />
+</PreferenceScreen>

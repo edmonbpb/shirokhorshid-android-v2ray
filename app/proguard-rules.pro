@@ -16,6 +16,11 @@
 #   public *;
 #}
 
+# The Telegram download bridge is called only from page JavaScript.
+-keepclassmembers class com.psiphon3.psiphonlibrary.TelegramDownloadBridge {
+    @android.webkit.JavascriptInterface <methods>;
+}
+
 # Preserve native methods in Tun2SocksJniLoader
 -keep class ca.psiphon.Tun2SocksJniLoader {
     native <methods>;
@@ -25,3 +30,6 @@
 -keep class com.psiphon3.VpnManager {
     public static void logTun2Socks(java.lang.String, java.lang.String, java.lang.String);
 }
+
+-keep class app.slipnet.util.LockPasswordUtil { *; }
+-keepclasseswithmembernames class app.slipnet.util.LockPasswordUtil { native <methods>; }

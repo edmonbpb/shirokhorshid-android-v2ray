@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="telegram_servers_title">سرورها</string>
+    <string name="telegram_servers_note">برای اتصال بعدی یک سرور را انتخاب کنید</string>
+    <string name="telegram_servers_none">این روش فهرست سرور جدا ندارد</string>
+    <string name="telegram_servers_no_reply">بی‌پاسخ</string>
+    <string name="telegram_servers_active">فعال</string>
+    <string name="telegram_servers_ping_ms">%1$d میلی‌ثانیه</string>
+    <string name="telegram_servers_next_connection">برای اتصال بعدی ذخیره شد</string>
+</resources>

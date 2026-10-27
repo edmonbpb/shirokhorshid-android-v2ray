@@ -42,6 +42,7 @@ public abstract class LocalizedActivities {
 
         @Override
         protected void onPause() {
+            AppLockGate.onActivityPaused(this);
             super.onPause();
             tunnelServiceInteractor.onStop(this);
         }
@@ -50,6 +51,7 @@ public abstract class LocalizedActivities {
         protected void onResume() {
             super.onResume();
             tunnelServiceInteractor.onStart(this);
+            AppLockGate.onActivityResumed(this);
         }
 
         @Override
@@ -66,6 +68,10 @@ public abstract class LocalizedActivities {
 
         @Override
         protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+            if (requestCode == AppLockGate.REQUEST_CODE) {
+                AppLockGate.onAuthenticationResult(resultCode == RESULT_OK);
+                return;
+            }
             if (requestCode == REQUEST_CODE_PREPARE_VPN) {
                 if (resultCode == RESULT_OK) {
                     getTunnelServiceInteractor().startTunnelService(this);

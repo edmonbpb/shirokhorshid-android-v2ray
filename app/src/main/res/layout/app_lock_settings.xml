@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/app_lock_heading"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/app_lock_title"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/app_lock_note"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/app_lock_note"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="14sp" />
+
+        <RadioGroup
+            android:id="@+id/app_lock_mode_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical">
+
+            <RadioButton
+                android:id="@+id/app_lock_mode_none"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/app_lock_none"
+                android:textSize="16sp" />
+
+            <RadioButton
+                android:id="@+id/app_lock_mode_biometric"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/app_lock_biometric"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/app_lock_reason_biometric"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:paddingStart="36dp"
+                android:paddingLeft="36dp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+            <RadioButton
+                android:id="@+id/app_lock_mode_device"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/app_lock_device"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/app_lock_reason_device"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:paddingStart="36dp"
+                android:paddingLeft="36dp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+            <RadioButton
+                android:id="@+id/app_lock_mode_any"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/app_lock_any"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/app_lock_reason_any"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:paddingStart="36dp"
+                android:paddingLeft="36dp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="12sp"
+                android:visibility="gone" />
+        </RadioGroup>
+
+        <TextView
+            android:id="@+id/app_lock_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/app_lock_open_settings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/app_lock_open_settings"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/app_lock_available_heading"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/app_lock_available_note"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/app_lock_available_body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="14sp" />
+    </LinearLayout>
+</ScrollView>

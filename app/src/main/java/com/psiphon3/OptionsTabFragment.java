@@ -15,6 +15,8 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
 
+import com.psiphon3.psiphonlibrary.AppLockPreferenceActivity;
+import com.psiphon3.psiphonlibrary.AppLockStore;
 import com.psiphon3.psiphonlibrary.DisguiseManager;
 import com.psiphon3.psiphonlibrary.LocalizedActivities;
 import com.psiphon3.psiphonlibrary.MoreOptionsPreferenceActivity;
@@ -22,10 +24,10 @@ import com.psiphon3.psiphonlibrary.ProxyOptionsPreferenceActivity;
 import com.psiphon3.psiphonlibrary.PsiphonConstants;
 import com.psiphon3.psiphonlibrary.PsiphonPreferenceFragmentCompat;
 import com.psiphon3.psiphonlibrary.RegionListPreference;
+import com.psiphon3.psiphonlibrary.TelegramWebActivity;
 import com.psiphon3.psiphonlibrary.TunnelServiceInteractor;
 import com.psiphon3.psiphonlibrary.UpstreamProxySettings;
 import com.psiphon3.psiphonlibrary.Utils;
-import com.psiphon3.psiphonlibrary.V2RayPreferenceActivity;
 import com.psiphon3.psiphonlibrary.VpnAppsUtils;
 import com.psiphon3.psiphonlibrary.VpnOptionsPreferenceActivity;
 
@@ -44,11 +46,12 @@ public class OptionsTabFragment extends PsiphonPreferenceFragmentCompat {
     private static final int REQUEST_CODE_VPN_PREFERENCES = 100;
     private static final int REQUEST_CODE_PROXY_PREFERENCES = 101;
     private static final int REQUEST_CODE_MORE_PREFERENCES = 102;
-    private static final int REQUEST_CODE_V2RAY_PREFERENCES = 103;
 
     private RegionListPreference regionListPreference;
     private Preference vpnOptionsPreference;
     private Preference proxyOptionsPreference;
+    private Preference telegramOptionsPreference;
+    private Preference securityOptionsPreference;
     private AppPreferences multiProcessPreferences;
     private MainActivityViewModel viewModel;
     private final CompositeDisposable compositeDisposable = new CompositeDisposable();
@@ -109,15 +112,25 @@ public class OptionsTabFragment extends PsiphonPreferenceFragmentCompat {
             return true;
         });
 
-        Preference v2rayOptionsPreference = findPreference(getContext().getString(R.string.v2rayOptionsPreferenceKey));
-        v2rayOptionsPreference.setOnPreferenceClickListener(__ -> {
+        telegramOptionsPreference = findPreference(getContext().getString(R.string.telegramOptionsPreferenceKey));
+        telegramOptionsPreference.setOnPreferenceClickListener(__ -> {
             final FragmentActivity activity = getActivity();
             if (activity != null && !activity.isFinishing()) {
-                startActivityForResult(new Intent(getActivity(),
-                        V2RayPreferenceActivity.class), REQUEST_CODE_V2RAY_PREFERENCES);
+                startActivity(new Intent(getActivity(), TelegramWebActivity.class));
             }
             return true;
         });
+
+        securityOptionsPreference = findPreference(getContext().getString(R.string.securityOptionsPreferenceKey));
+        if (securityOptionsPreference != null) {
+            securityOptionsPreference.setOnPreferenceClickListener(__ -> {
+                final FragmentActivity activity = getActivity();
+                if (activity != null && !activity.isFinishing()) {
+                    startActivity(new Intent(getActivity(), AppLockPreferenceActivity.class));
+                }
+                return true;
+            });
+        }
     }
 
     @Override
@@ -228,6 +241,40 @@ public class OptionsTabFragment extends PsiphonPreferenceFragmentCompat {
             }
         } else {
             proxyOptionsPreference.setSummary(R.string.preference_summary_no_proxy);
+        }
+        if (telegramOptionsPreference != null) {
+            String[] methodNames = getResources().getStringArray(R.array.telegram_method_names);
+            if (methodNames != null && methodNames.length > 0) {
+                int methodIndex = getContext()
+                        .getSharedPreferences("slipnet_prefs", Context.MODE_PRIVATE)
+                        .getInt("telegram_method", 0);
+                if (methodIndex < 0 || methodIndex >= methodNames.length) {
+                    methodIndex = 0;
+                }
+                telegramOptionsPreference.setSummary(
+                        getString(R.string.telegram_home_summary, methodNames[methodIndex]));
+            }
+        }
+        if (securityOptionsPreference != null) {
+            AppLockStore.Mode appLockMode = AppLockStore.getMode(getContext());
+            int appLockSummaryRes;
+            switch (appLockMode == null ? AppLockStore.Mode.NONE : appLockMode) {
+                case BIOMETRIC:
+                    appLockSummaryRes = R.string.app_lock_biometric;
+                    break;
+                case DEVICE_CREDENTIAL:
+                    appLockSummaryRes = R.string.app_lock_device;
+                    break;
+                case ANY:
+                    appLockSummaryRes = R.string.app_lock_any;
+                    break;
+                case NONE:
+                default:
+                    appLockSummaryRes = R.string.app_lock_none;
+                    break;
+            }
+            securityOptionsPreference.setSummary(
+                    getString(R.string.security_home_summary, getString(appLockSummaryRes)));
         }
     }
 

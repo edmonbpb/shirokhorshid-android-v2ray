@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="slipnet_scan_source_telegram">تلگرام</string>
+    <string name="slipnet_scan_telegram_hint">تلگرام را از طریق تونل WhiteDNS باز کرده و فهرست DNS ربات را ذخیره کنید.</string>
+    <string name="slipnet_scan_telegram_open">باز کردن تلگرام</string>
+    <string name="slipnet_scan_telegram_count">%1$d سرور DNS از تلگرام دریافت شد</string>
+    <string name="slipnet_scan_telegram_empty">هنوز فهرستی ذخیره نشده است. تلگرام را باز کنید.</string>
+    <string name="slipnet_scan_telegram_saved_at">زمان ذخیره: %1$s</string>
+</resources>

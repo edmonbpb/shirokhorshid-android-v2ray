@@ -339,6 +339,7 @@ public class UpgradeChecker extends BroadcastReceiver {
                     this,                       // context
                     tunnelManagerConfig,
                     true,
+                    false,
                     "upgradechecker");           // tempTunnelName
             return tunnelCoreConfig == null ? "" : tunnelCoreConfig;
         }

@@ -46,6 +46,10 @@
     <string name="current_local_http_proxy_port">currentLocalHttpProxyPort</string>
     <string name="proxyOptionsPreferenceKey" translatable="false">proxyOptionsPreferenceKey</string>
     <string name="v2rayOptionsPreferenceKey" translatable="false">v2rayOptionsPreferenceKey</string>
+    <string name="napsterOptionsPreferenceKey" translatable="false">napsterOptionsPreferenceKey</string>
+    <string name="telegramOptionsPreferenceKey" translatable="false">telegramOptionsPreferenceKey</string>
+    <string name="securityOptionsPreferenceKey" translatable="false">securityOptionsPreferenceKey</string>
+    <string name="slipnetTestPreferenceKey" translatable="false">slipnetTestPreferenceKey</string>
     <string name="vpnOptionsPreferenceKey" translatable="false">vpnOptionsPreferenceKey</string>
     <string name="feedbackPreferenceKey" translatable="false">feedbackPreferenceKey</string>
     <string name="moreOptionsPreferenceKey" translatable="false">moreOptionsPreferenceKey</string>
@@ -69,6 +73,9 @@
         <item>@string/protocol_direct</item>
         <item>@string/protocol_cdn_fronting</item>
         <item>@string/protocol_conduit</item>
+        <item>@string/protocol_whitedns</item>
+        <item>@string/protocol_napster</item>
+        <item>@string/protocol_v2ray</item>
     </string-array>
 
     <string-array name="protocol_selection_values" translatable="false">
@@ -76,6 +83,9 @@
         <item>direct</item>
         <item>cdn_fronting</item>
         <item>conduit</item>
+        <item>whitedns</item>
+        <item>napster</item>
+        <item>v2ray</item>
     </string-array>
 
     <string-array name="conduit_mode_entries" translatable="false">

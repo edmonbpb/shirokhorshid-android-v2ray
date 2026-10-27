@@ -15,8 +15,11 @@
         android:title="@string/label_proxy_settings" />
     <Preference
         android:icon="@drawable/baseline_device_hub_white_24"
-        android:key="@string/v2rayOptionsPreferenceKey"
-        android:title="@string/label_v2ray_settings" />
+        android:key="@string/telegramOptionsPreferenceKey"
+        android:title="@string/label_telegram_settings" />
+    <Preference
+        android:key="@string/securityOptionsPreferenceKey"
+        android:title="@string/label_security_settings" />
     <Preference
         android:key="@string/feedbackPreferenceKey"
         android:icon="@drawable/baseline_send_white_24"

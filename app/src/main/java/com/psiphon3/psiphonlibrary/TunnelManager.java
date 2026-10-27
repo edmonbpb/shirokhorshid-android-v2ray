@@ -51,6 +51,8 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.PermissionChecker;
 
+import app.whitedns.engine.WhiteDnsUpstream;
+
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.psiphon3.BuildConfig;
 import com.psiphon3.Location;
@@ -69,6 +71,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Date;
@@ -153,7 +156,7 @@ public class TunnelManager implements PsiphonTunnel.HostService, VpnManager.VpnS
     static class Config {
         String egressRegion = PsiphonConstants.REGION_CODE_ANY;
         boolean disableTimeouts = false;
-        String protocolSelection = "auto"; // "auto", "conduit", "cdn_fronting", or "direct"
+        String protocolSelection = "auto"; // "auto", "conduit", "cdn_fronting", "direct", "whitedns", "napster", or "v2ray"
         String cdnFrontingCustomIpList = "";
         String cdnFrontingCustomSni = "";
         boolean beastMode = true; // aggressive establishment: try all protocols on all servers
@@ -449,6 +452,7 @@ public class TunnelManager implements PsiphonTunnel.HostService, VpnManager.VpnS
 
         stopAndWaitForTunnel();
         V2RayManager.stop();
+        WhiteDnsUpstream.stop();
         m_compositeDisposable.dispose();
         // Unregister host service for the VPN manager
         m_vpnManager.unregisterHostService();
@@ -1166,15 +1170,43 @@ public class TunnelManager implements PsiphonTunnel.HostService, VpnManager.VpnS
         sendDataTransferStatsHandler.postDelayed(sendDataTransferStats, sendDataTransferStatsIntervalMs);
 
         try {
-            boolean v2rayEnabled = V2RayConfigStore.isFeatureEnabled(getContext());
-            android.util.Log.i("V2Ray", "runTunnel: feature enabled=" + v2rayEnabled);
-            if (v2rayEnabled) {
+            String selectedProtocol = new AppPreferences(getContext()).getString(
+                    getContext().getString(R.string.protocolSelectionPreference), "auto");
+            if ("whitedns".equals(selectedProtocol)) {
+                // Fail closed: with the DNS tunnel selected, the engine is the only way to the
+                // servers, so no profile or no engine must not end in a direct connection.
                 try {
-                    V2RayManager.start(getContext());
-                } catch (V2RayManager.V2RayException e) {
-                    // Fail closed: never fall back to a direct connection when V2Ray was requested.
-                    MyLog.e(R.string.v2ray_start_failed, MyLog.Sensitivity.NOT_SENSITIVE, e.getMessage());
+                    WhiteDnsUpstream.start(getContext());
+                } catch (IOException e) {
+                    MyLog.e(R.string.whitedns_upstream_failed, MyLog.Sensitivity.NOT_SENSITIVE);
+                    MyLog.w("WhiteDNS upstream: "
+                            + (e.getMessage() == null ? "start failed" : e.getMessage()));
                     return;
+                }
+            } else if ("napster".equals(selectedProtocol) || "v2ray".equals(selectedProtocol)) {
+                // Fail closed: the selected Xray source is the only way to the servers.
+                boolean napster = "napster".equals(selectedProtocol);
+                try {
+                    V2RayManager.startForProtocol(getContext(), napster);
+                } catch (V2RayManager.V2RayException e) {
+                    int message = napster ? R.string.napster_start_failed : R.string.v2ray_start_failed;
+                    MyLog.e(message, MyLog.Sensitivity.NOT_SENSITIVE, e.getMessage());
+                    return;
+                }
+            } else {
+                boolean napsterEnabled = NapsterConfigStore.isFeatureEnabled(getContext());
+                boolean v2rayEnabled = V2RayConfigStore.isFeatureEnabled(getContext());
+                android.util.Log.i("V2Ray", "runTunnel: v2ray enabled=" + v2rayEnabled
+                        + " napster enabled=" + napsterEnabled);
+                if (v2rayEnabled || napsterEnabled) {
+                    try {
+                        V2RayManager.start(getContext());
+                    } catch (V2RayManager.V2RayException e) {
+                        // Fail closed: never fall back to a direct connection when V2Ray was requested.
+                        int message = napsterEnabled ? R.string.napster_start_failed : R.string.v2ray_start_failed;
+                        MyLog.e(message, MyLog.Sensitivity.NOT_SENSITIVE, e.getMessage());
+                        return;
+                    }
                 }
             }
             m_vpnManager.setShareProxyOnNetwork(m_tunnelConfig.shareProxyOnNetwork);
@@ -1220,6 +1252,7 @@ public class TunnelManager implements PsiphonTunnel.HostService, VpnManager.VpnS
             m_vpnManager.vpnTeardown();
             m_tunnel.stop();
             V2RayManager.stop();
+            WhiteDnsUpstream.stop();
 
             sendDataTransferStatsHandler.removeCallbacks(sendDataTransferStats);
             DataTransferStats.getDataTransferStatsForService().stop();
@@ -1282,9 +1315,10 @@ public class TunnelManager implements PsiphonTunnel.HostService, VpnManager.VpnS
 
         Context context = getContext();
         PackageManager pm = context.getPackageManager();
-        // The Xray child shares the app UID and does not call VpnService.protect, so the app
-        // itself must stay outside the VPN while it carries the upstream connection.
-        boolean xrayUpstream = V2RayManager.isRunning();
+        // The Xray and WhiteDNS child processes share the app UID and do not call
+        // VpnService.protect, so the app itself must stay outside the VPN while it carries the
+        // upstream connection.
+        boolean upstreamRunning = V2RayManager.isRunning() || WhiteDnsUpstream.isRunning();
 
         // Reset VPN config state
         m_tunnelState.vpnApps.clear();
@@ -1352,7 +1386,7 @@ public class TunnelManager implements PsiphonTunnel.HostService, VpnManager.VpnS
                     // Also always include the Psiphon app itself in this mode
                     // Note that we are not checking if the app is installed here, we trust that self is always installed
                     // and log a warning if it is not (should never happen)
-                    if (xrayUpstream) {
+                    if (upstreamRunning) {
                         MyLog.i(R.string.v2ray_app_outside_vpn, MyLog.Sensitivity.NOT_SENSITIVE);
                     } else {
                         try {
@@ -1435,7 +1469,7 @@ public class TunnelManager implements PsiphonTunnel.HostService, VpnManager.VpnS
                 break;
         }
 
-        if (xrayUpstream
+        if (upstreamRunning
                 && vpnAppsExclusionSetting == VpnAppsUtils.VpnAppsExclusionSetting.EXCLUDE_APPS) {
             excludeSelfFromVpn(vpnBuilder, context);
         }
@@ -1475,7 +1509,7 @@ public class TunnelManager implements PsiphonTunnel.HostService, VpnManager.VpnS
             }
         }
 
-        if (xrayUpstream
+        if (upstreamRunning
                 && vpnAppsExclusionSetting == VpnAppsUtils.VpnAppsExclusionSetting.ALL_APPS) {
             excludeSelfFromVpn(vpnBuilder, context);
         }
@@ -1837,6 +1871,7 @@ public class TunnelManager implements PsiphonTunnel.HostService, VpnManager.VpnS
             Context context,
             Config tunnelConfig,
             boolean useUpstreamProxy,
+            boolean enforceSelectedUpstream,
             String tempTunnelName) {
         boolean temporaryTunnel = tempTunnelName != null && !tempTunnelName.isEmpty();
 
@@ -1872,15 +1907,42 @@ public class TunnelManager implements PsiphonTunnel.HostService, VpnManager.VpnS
 
             json.put("ExchangeObfuscationKey", EmbeddedValues.SERVER_ENTRY_EXCHANGE_OBFUSCATION_KEY);
 
-            if (useUpstreamProxy) {
+            if (enforceSelectedUpstream && "whitedns".equals(tunnelConfig.protocolSelection)) {
+                String whitednsProxyUrl = WhiteDnsUpstream.getProxyUrl();
+                if (whitednsProxyUrl == null) {
+                    // Fail closed: the core must never dial a server directly when the user
+                    // selected the DNS tunnel as the way out.
+                    MyLog.e(R.string.whitedns_upstream_failed, MyLog.Sensitivity.NOT_SENSITIVE);
+                    return null;
+                }
+                json.put("UpstreamProxyUrl", whitednsProxyUrl);
+            } else if (enforceSelectedUpstream &&
+                    ("napster".equals(tunnelConfig.protocolSelection)
+                            || "v2ray".equals(tunnelConfig.protocolSelection))) {
+                // Fail closed: the selected Xray source is the only way to the servers.
+                boolean napster = "napster".equals(tunnelConfig.protocolSelection);
+                String coreProxyUrl = V2RayManager.getUpstreamProxyUrl();
+                String coreSource = V2RayManager.getSourceTag();
+                if (coreProxyUrl == null || coreSource == null
+                        || !(napster ? coreSource.startsWith("napster") : "v2ray".equals(coreSource))) {
+                    int message = napster
+                            ? R.string.napster_start_failed : R.string.v2ray_start_failed;
+                    MyLog.e(message, MyLog.Sensitivity.NOT_SENSITIVE, "the Xray core is not running");
+                    return null;
+                }
+                json.put("UpstreamProxyUrl", coreProxyUrl);
+            } else if (useUpstreamProxy) {
                 String v2rayProxyUrl = V2RayManager.getUpstreamProxyUrl();
                 if (v2rayProxyUrl != null) {
                     json.put("UpstreamProxyUrl", v2rayProxyUrl);
-                } else if (!temporaryTunnel && V2RayConfigStore.isFeatureEnabled(context)) {
+                } else if (enforceSelectedUpstream && !temporaryTunnel
+                        && (V2RayConfigStore.isFeatureEnabled(context)
+                        || NapsterConfigStore.isFeatureEnabled(context))) {
                     // Fail closed: the main tunnel must never fall back to a direct connection
-                    // when the user selected V2Ray as its upstream.
-                    MyLog.e(R.string.v2ray_start_failed, MyLog.Sensitivity.NOT_SENSITIVE,
-                            "the Xray core is not running");
+                    // when the user selected V2Ray or Napster as its upstream.
+                    int message = NapsterConfigStore.isFeatureEnabled(context)
+                            ? R.string.napster_start_failed : R.string.v2ray_start_failed;
+                    MyLog.e(message, MyLog.Sensitivity.NOT_SENSITIVE, "the Xray core is not running");
                     return null;
                 } else if (UpstreamProxySettings.getUseHTTPProxy(context)) {
                     if (UpstreamProxySettings.getProxySettings(context) != null) {
@@ -1944,9 +2006,16 @@ public class TunnelManager implements PsiphonTunnel.HostService, VpnManager.VpnS
                 json.put("NetworkLatencyMultiplierLambda", 0.1);
             }
 
-            // Protocol selection: auto, conduit, CDN fronting, or direct
+            // Protocol selection: auto, conduit, CDN fronting, direct, or an upstream engine
             String protocolSelection = tunnelConfig.protocolSelection;
             MyLog.i("ProtocolSelection", "mode", protocolSelection);
+            // The core has no "whitedns", "napster" or "v2ray" mode: the DNS and Xray engines are
+            // upstream proxies, so the core keeps the direct protocol set and never receives
+            // those values.
+            if ("whitedns".equals(protocolSelection) || "napster".equals(protocolSelection)
+                    || "v2ray".equals(protocolSelection)) {
+                protocolSelection = "direct";
+            }
 
             boolean enableCdnFronting =
                     "auto".equals(protocolSelection) ||
@@ -2135,7 +2204,7 @@ public class TunnelManager implements PsiphonTunnel.HostService, VpnManager.VpnS
         setPlatformAffixes(m_tunnel, null);
         // Sync instance fallback state into config for the static buildTunnelCoreConfig
         m_tunnelConfig.conduitFallbackToPublic = m_conduitFallbackToPublic;
-        String config = buildTunnelCoreConfig(getContext(), m_tunnelConfig, true, null);
+        String config = buildTunnelCoreConfig(getContext(), m_tunnelConfig, true, true, null);
         return config == null ? "" : config;
     }
 

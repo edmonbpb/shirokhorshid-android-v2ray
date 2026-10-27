@@ -309,6 +309,7 @@ public class FeedbackWorker extends RxWorker {
                                 context,
                                 tunnelManagerConfig,
                                 tunnelState.isStopped(),
+                                false,
                                 null);
                         if (tunnelCoreConfig == null) {
                             return Flowable.error(new Exception("tunnel-core config null"));

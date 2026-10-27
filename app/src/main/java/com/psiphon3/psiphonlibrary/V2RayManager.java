@@ -23,6 +23,8 @@ import android.content.Context;
 import android.os.Build;
 import android.util.Log;
 
+import net.grandcentrix.tray.AppPreferences;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -54,6 +56,9 @@ public final class V2RayManager {
     private static final String TAG = "V2Ray";
     private static final Object LOCK = new Object();
     private static final String CORE_LIBRARY = "libxraycore.so";
+    public static final String TRAY_SOCKS_PORT = "v2ray_socks_port";
+    public static final String TRAY_PROXY_URL = "v2ray_proxy_url";
+    public static final String TRAY_SOURCE = "v2ray_proxy_source";
     private static final long READY_TIMEOUT_MS = 20000L;
     private static final int MAX_MEMORY_LOG_LINES = 400;
     private static final int MAX_ERROR_LENGTH = 400;
@@ -70,9 +75,16 @@ public final class V2RayManager {
     private static boolean sStarting;
     private static boolean sRunning;
     private static String sProxyUrl;
+    private static int sSocksPort;
+    private static String sSourceTag = "v2ray";
+    private static boolean sTelegramOwned;
+    private static int sTelegramLeases;
+    private static Context sContext;
     private static final ArrayDeque<String> sLogLines = new ArrayDeque<>();
 
     private V2RayManager() { }
+
+    public enum Source { AUTO, V2RAY, NAPSTER }
 
     public static final class V2RayException extends Exception {
         public V2RayException(String message) { super(message); }
@@ -84,27 +96,112 @@ public final class V2RayManager {
     }
 
     public static void start(Context context) throws V2RayException {
+        startInternal(context, Source.AUTO);
+    }
+
+    public static void startForProtocol(Context context, boolean napster) throws V2RayException {
+        startInternal(context, napster ? Source.NAPSTER : Source.V2RAY);
+    }
+
+    private static void startInternal(Context context, Source source) throws V2RayException {
         Log.i(TAG, "start requested");
         CountDownLatch latch;
         synchronized (LOCK) {
-            if (sRunning && isProcessAlive(sProcess)) return;
-            latch = sStarting ? sReadyLatch : startLocked(context);
+            if (sRunning && isProcessAlive(sProcess)) {
+                checkSourceLocked(source);
+                return;
+            }
+            latch = sStarting ? sReadyLatch : startLocked(context, source);
         }
         boolean ready = await(latch, READY_TIMEOUT_MS);
         synchronized (LOCK) {
             Log.i(TAG, "start ready=" + ready + " alive=" + isProcessAlive(sProcess));
             if (ready && sReadyLatch == latch && isProcessAlive(sProcess)) {
+                checkSourceLocked(source);
                 sStarting = false; sRunning = true;
+                publishLocked(context);
                 return;
             }
             String tail = tailLocked(20);
             if (sReadyLatch != latch) {
-                if (sRunning && isProcessAlive(sProcess)) return;
+                if (sRunning && isProcessAlive(sProcess)) {
+                    checkSourceLocked(source);
+                    return;
+                }
                 throw new V2RayException("Xray did not start: " + tail);
             }
             stopLocked();
             Log.w(TAG, "Xray did not start: " + tail);
             throw new V2RayException("Xray did not start: " + tail);
+        }
+    }
+
+    public static int acquireForTelegram(Context ctx, boolean napster) throws V2RayException {
+        Log.i(TAG, "telegram acquire requested");
+        CountDownLatch latch;
+        boolean initiated = false;
+        synchronized (LOCK) {
+            if (sRunning && isProcessAlive(sProcess)) {
+                if (!sourceMatchesLocked(napster)) {
+                    throw new V2RayException("the other upstream method is already running");
+                }
+                sTelegramLeases++;
+                return sSocksPort;
+            }
+            if (sStarting) {
+                latch = sReadyLatch;
+            } else {
+                latch = startLocked(ctx, napster ? Source.NAPSTER : Source.V2RAY);
+                initiated = true;
+            }
+        }
+        boolean ready = await(latch, READY_TIMEOUT_MS);
+        synchronized (LOCK) {
+            Log.i(TAG, "telegram acquire ready=" + ready + " alive=" + isProcessAlive(sProcess));
+            if (ready && sReadyLatch == latch && isProcessAlive(sProcess)) {
+                if (!sourceMatchesLocked(napster)) {
+                    throw new V2RayException("the other upstream method is already running");
+                }
+                sStarting = false; sRunning = true;
+                if (initiated) sTelegramOwned = true;
+                sTelegramLeases++;
+                publishLocked(ctx);
+                return sSocksPort;
+            }
+            String tail = tailLocked(20);
+            if (sReadyLatch != latch) {
+                if (sRunning && isProcessAlive(sProcess)) {
+                    if (!sourceMatchesLocked(napster)) {
+                        throw new V2RayException("the other upstream method is already running");
+                    }
+                    sTelegramLeases++;
+                    return sSocksPort;
+                }
+                throw new V2RayException("Xray did not start: " + tail);
+            }
+            stopLocked();
+            Log.w(TAG, "Xray did not start: " + tail);
+            throw new V2RayException("Xray did not start: " + tail);
+        }
+    }
+
+    private static boolean sourceMatchesLocked(boolean napster) {
+        return napster ? sSourceTag.startsWith("napster") : "v2ray".equals(sSourceTag);
+    }
+
+    private static void checkSourceLocked(Source source) throws V2RayException {
+        if (source == Source.AUTO) return;
+        if (!sourceMatchesLocked(source == Source.NAPSTER)) {
+            throw new V2RayException("the other upstream method is already running");
+        }
+    }
+
+    public static void releaseForTelegram() {
+        synchronized (LOCK) {
+            if (sTelegramLeases > 0) sTelegramLeases--;
+            if (!sTelegramOwned || sTelegramLeases > 0) return;
+            sTelegramOwned = false;
+            stop();
         }
     }
 
@@ -116,6 +213,42 @@ public final class V2RayManager {
 
     public static String getUpstreamProxyUrl() {
         synchronized (LOCK) { return (sRunning && isProcessAlive(sProcess)) ? sProxyUrl : null; }
+    }
+
+    public static String getSourceTag() {
+        synchronized (LOCK) { return (sRunning && isProcessAlive(sProcess)) ? sSourceTag : null; }
+    }
+
+    public static int getSocksPort() {
+        synchronized (LOCK) { return (sRunning && isProcessAlive(sProcess)) ? sSocksPort : 0; }
+    }
+
+    public static int getPublishedSocksPort(Context ctx) {
+        if (ctx == null) return 0;
+        try { return new AppPreferences(ctx).getInt(TRAY_SOCKS_PORT, 0); }
+        catch (RuntimeException e) {
+            Log.w(TAG, "Could not read the published SOCKS port");
+            return 0;
+        }
+    }
+
+    public static String getPublishedProxyUrl(Context ctx) {
+        return publishedString(ctx, TRAY_PROXY_URL);
+    }
+
+    public static String getPublishedSource(Context ctx) {
+        return publishedString(ctx, TRAY_SOURCE);
+    }
+
+    private static String publishedString(Context ctx, String key) {
+        if (ctx == null) return null;
+        try {
+            String value = new AppPreferences(ctx).getString(key, "");
+            return value == null || value.isEmpty() ? null : value;
+        } catch (RuntimeException e) {
+            Log.w(TAG, "Could not read the published proxy state");
+            return null;
+        }
     }
 
     public static String convertShareLinks(Context context, String text) throws V2RayException {
@@ -133,7 +266,7 @@ public final class V2RayManager {
             }
         }
         String output = lastJsonLine(result.stdout);
-        if (!result.timedOut && result.exitCode == 0 && !output.isEmpty()) return output;
+        if (!result.timedOut && result.exitCode == 0 && output.startsWith("{")) return output;
         Log.w(TAG, "Could not convert the V2Ray share links");
         throw new V2RayException(errorText(result, "could not convert the share links"));
     }
@@ -203,18 +336,22 @@ public final class V2RayManager {
     }
 
     static String sanitizeConfig(String body, int port, String user, String pass) {
+        return sanitizeConfig(body, port, 0, user, pass);
+    }
+
+    static String sanitizeConfig(String body, int port, int socksPort, String user, String pass) {
         JSONObject source;
         try { source = new JSONObject(body == null ? "" : body); }
         catch (JSONException e) { throw new IllegalArgumentException("invalid JSON", e); }
         try {
-            String json = buildSanitized(source, port, user, pass).toString();
+            String json = buildSanitized(source, port, socksPort, user, pass).toString();
             new JSONObject(json);
             return json;
         } catch (JSONException e) { throw new IllegalArgumentException("invalid config", e); }
     }
 
-    private static JSONObject buildSanitized(JSONObject source, int port, String user, String pass)
-            throws JSONException {
+    private static JSONObject buildSanitized(JSONObject source, int port, int socksPort,
+            String user, String pass) throws JSONException {
         JSONArray sourceOutbounds = source.optJSONArray("outbounds");
         List<JSONObject> outbounds = new ArrayList<>();
         if (sourceOutbounds != null) for (int i = 0; i < sourceOutbounds.length(); i++) {
@@ -222,6 +359,9 @@ public final class V2RayManager {
             if (outbound != null) outbounds.add(outbound);
         }
         if (outbounds.isEmpty()) throw new IllegalArgumentException("no outbounds");
+        for (JSONObject outbound : outbounds) {
+            normalizeOutboundSettings(outbound);
+        }
         JSONObject primary = null;
         for (JSONObject outbound : outbounds) {
             if ("proxy".equals(tagOf(outbound))) { primary = outbound; break; }
@@ -261,13 +401,26 @@ public final class V2RayManager {
             output.put(key, source.get(key));
         }
         output.put("log", new JSONObject().put("loglevel", "info"));
-        output.put("inbounds", new JSONArray().put(new JSONObject()
+        JSONArray inbounds = new JSONArray().put(new JSONObject()
                 .put("tag", inboundTag).put("listen", "127.0.0.1").put("port", port)
                 .put("protocol", "http")
                 .put("settings", new JSONObject()
                         .put("accounts", new JSONArray().put(new JSONObject()
                                 .put("user", user).put("pass", pass)))
-                        .put("allowTransparent", false))));
+                        .put("allowTransparent", false)));
+        if (socksPort > 0) {
+            String socksTag = "telegram-socks";
+            int socksSuffix = 2;
+            while (isTagUsed(socksTag, outbounds, null)) {
+                socksTag = "telegram-socks-" + socksSuffix++;
+            }
+            inbounds.put(new JSONObject()
+                    .put("tag", socksTag).put("listen", "127.0.0.1").put("port", socksPort)
+                    .put("protocol", "socks")
+                    .put("settings", new JSONObject()
+                            .put("auth", "noauth").put("udp", false)));
+        }
+        output.put("inbounds", inbounds);
         output.put("routing", new JSONObject()
                 .put("domainStrategy", "AsIs")
                 .put("rules", new JSONArray().put(new JSONObject()
@@ -275,6 +428,53 @@ public final class V2RayManager {
                         .put("outboundTag", primaryTag))));
         output.put("outbounds", outputOutbounds);
         return output;
+    }
+
+    private static void normalizeOutboundSettings(JSONObject outbound) throws JSONException {
+        JSONObject settings = outbound.optJSONObject("settings");
+        if (settings == null) {
+            return;
+        }
+        JSONArray vnext = settings.optJSONArray("vnext");
+        if (vnext != null) {
+            for (int i = 0; i < vnext.length(); i++) {
+                JSONObject node = vnext.optJSONObject(i);
+                if (node == null) {
+                    continue;
+                }
+                coerceInt(node, "port", 1, 65535);
+                coerceInt(node, "alterId", 0, Integer.MAX_VALUE);
+                JSONArray users = node.optJSONArray("users");
+                if (users != null) {
+                    for (int j = 0; j < users.length(); j++) {
+                        coerceInt(users.optJSONObject(j), "alterId", 0, Integer.MAX_VALUE);
+                    }
+                }
+            }
+        }
+        JSONArray servers = settings.optJSONArray("servers");
+        if (servers != null) {
+            for (int i = 0; i < servers.length(); i++) {
+                coerceInt(servers.optJSONObject(i), "port", 1, 65535);
+            }
+        }
+    }
+
+    private static void coerceInt(JSONObject obj, String key, int min, int max) throws JSONException {
+        if (obj == null) {
+            return;
+        }
+        Object value = obj.opt(key);
+        if (!(value instanceof String)) {
+            return;
+        }
+        try {
+            int parsed = Integer.parseInt(((String) value).trim());
+            if (parsed >= min && parsed <= max) {
+                obj.put(key, parsed);
+            }
+        } catch (NumberFormatException ignored) {
+        }
     }
 
     private static String parseTestResponse(String stdout) {
@@ -292,15 +492,43 @@ public final class V2RayManager {
         } catch (JSONException e) { return "unexpected response"; }
     }
 
-    private static CountDownLatch startLocked(Context context) throws V2RayException {
-        V2RayConfigStore.ConfigEntry entry = V2RayConfigStore.getActiveConfig(context);
-        if (entry == null) throw new V2RayException("no active V2Ray config");
-        String body = V2RayConfigStore.readConfigBody(context, entry.id);
-        if (body == null) throw new V2RayException("no active V2Ray config");
-        int port = findFreePort(); String user = randomToken(24); String pass = randomToken(24);
-        Log.i(TAG, "active config=" + entry.id + " port=" + port);
+    private static CountDownLatch startLocked(Context context, Source source)
+            throws V2RayException {
+        String body;
+        boolean napster;
+        NapsterConfigStore.ConfigEntry napsterEntry = null;
+        if (source == Source.AUTO) {
+            boolean v2rayOn = V2RayConfigStore.isFeatureEnabled(context);
+            boolean napsterOn = NapsterConfigStore.isFeatureEnabled(context);
+            if (v2rayOn && napsterOn) {
+                throw new V2RayException("both upstream methods are enabled");
+            }
+            napster = napsterOn;
+        } else {
+            napster = source == Source.NAPSTER;
+        }
+        if (napster) {
+            napsterEntry = NapsterConfigStore.getActiveConfig(context);
+            if (napsterEntry == null) throw new V2RayException("no active Napster config");
+            body = NapsterConfigStore.readConfigBody(context, napsterEntry.id);
+            if (body == null) throw new V2RayException("no active Napster config");
+        } else {
+            V2RayConfigStore.ConfigEntry entry = V2RayConfigStore.getActiveConfig(context);
+            if (entry == null) throw new V2RayException("no active V2Ray config");
+            body = V2RayConfigStore.readConfigBody(context, entry.id);
+            if (body == null) throw new V2RayException("no active V2Ray config");
+        }
+        int httpPort = findFreePort();
+        int socksPort = findFreePort();
+        while (socksPort == httpPort) socksPort = findFreePort();
+        String user = randomToken(24); String pass = randomToken(24);
+        sSourceTag = napster ? "napster:" + napsterEntry.id : "v2ray";
+        sSocksPort = socksPort;
+        Context app = context == null ? null : context.getApplicationContext();
+        sContext = app == null ? context : app;
+        Log.i(TAG, "upstream core starting, port=" + httpPort);
         String json;
-        try { json = sanitizeConfig(body, port, user, pass); }
+        try { json = sanitizeConfig(body, httpPort, socksPort, user, pass); }
         catch (IllegalArgumentException e) { throw new V2RayException("invalid V2Ray config: " + e.getMessage(), e); }
         File base = new File(context.getFilesDir(), "v2ray");
         File configFile = new File(new File(base, "run"), "config.json");
@@ -317,7 +545,7 @@ public final class V2RayManager {
             sProcessStdin = process.getOutputStream();
             sReadyLatch = new CountDownLatch(1);
             sStarting = true; sRunning = false;
-            sProxyUrl = "http://" + user + ":" + pass + "@127.0.0.1:" + port;
+            sProxyUrl = "http://" + user + ":" + pass + "@127.0.0.1:" + httpPort;
             sLogLines.clear();
             Thread reader = new Thread(new LogReader(process, logFile), "V2RayLogReader");
             reader.setDaemon(true);
@@ -345,6 +573,34 @@ public final class V2RayManager {
             }
         }
         sProcess = null; sProcessStdin = null; sReadyLatch = null;
+        sSocksPort = 0; sTelegramOwned = false; sTelegramLeases = 0;
+        clearPublishedLocked();
+    }
+
+    private static void publishLocked(Context context) {
+        Context app = context == null ? null : context.getApplicationContext();
+        if (app != null) sContext = app;
+        if (sContext == null) return;
+        try {
+            AppPreferences prefs = new AppPreferences(sContext);
+            prefs.put(TRAY_SOCKS_PORT, sSocksPort);
+            prefs.put(TRAY_PROXY_URL, sProxyUrl == null ? "" : sProxyUrl);
+            prefs.put(TRAY_SOURCE, sSourceTag);
+        } catch (RuntimeException e) {
+            Log.w(TAG, "Could not publish the proxy state");
+        }
+    }
+
+    private static void clearPublishedLocked() {
+        if (sContext == null) return;
+        try {
+            AppPreferences prefs = new AppPreferences(sContext);
+            prefs.remove(TRAY_SOCKS_PORT);
+            prefs.remove(TRAY_PROXY_URL);
+            prefs.remove(TRAY_SOURCE);
+        } catch (RuntimeException e) {
+            Log.w(TAG, "Could not clear the published proxy state");
+        }
     }
 
     private static boolean await(CountDownLatch latch, long timeoutMs) {
@@ -545,7 +801,7 @@ public final class V2RayManager {
         return token.toString();
     }
 
-    private static String corePath(Context context) {
+    static String corePath(Context context) {
         return new File(context.getApplicationInfo().nativeLibraryDir, CORE_LIBRARY)
                 .getAbsolutePath();
     }

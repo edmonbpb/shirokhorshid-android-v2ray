@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_lock_title">Security</string>
+    <string name="app_lock_note">With this setting, the app asks for the phone screen lock before it opens.</string>
+    <string name="app_lock_none">Off</string>
+    <string name="app_lock_biometric">Fingerprint or face</string>
+    <string name="app_lock_device">Phone PIN, pattern or password</string>
+    <string name="app_lock_any">Fingerprint/face or phone PIN</string>
+    <string name="app_lock_saved">Saved</string>
+    <string name="app_lock_not_secure">The phone has no screen lock. Set one first.</string>
+    <string name="app_lock_open_settings">Open phone security settings</string>
+    <string name="app_lock_unavailable_biometric">Not available on this phone</string>
+    <string name="app_lock_unavailable_device">Set a phone screen lock first</string>
+    <string name="app_lock_unavailable_any">Not available on this phone</string>
+    <string name="app_lock_available_note">What this phone supports</string>
+    <string name="app_lock_locked_title">Locked</string>
+    <string name="app_lock_locked_message">Unlock to open ShirOKhorshid</string>
+    <string name="app_lock_unlock">Unlock</string>
+</resources>

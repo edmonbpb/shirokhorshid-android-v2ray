@@ -42,6 +42,7 @@ import com.psiphon3.R;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -99,7 +100,12 @@ public class V2RayPreferenceActivity extends LocalizedActivities.AppCompatActivi
                 if (activity == null) {
                     return false;
                 }
-                V2RayConfigStore.setFeatureEnabled(activity.getApplicationContext(), (Boolean) newValue);
+                Context appContext = activity.getApplicationContext();
+                boolean enabled = (Boolean) newValue;
+                V2RayConfigStore.setFeatureEnabled(appContext, enabled);
+                if (enabled) {
+                    NapsterConfigStore.setFeatureEnabled(appContext, false);
+                }
                 refreshPreferenceState();
                 return true;
             });

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="telegram_title">Telegram</string>
+    <string name="telegram_close">Close</string>
+    <string name="telegram_connect">Connect</string>
+    <string name="telegram_disconnect">Disconnect</string>
+    <string name="telegram_try_again">Try again</string>
+    <string name="telegram_connecting">Connecting tunnel...</string>
+    <string name="telegram_connected">Tunnel connected. Loading Telegram...</string>
+    <string name="telegram_connecting_method">Connecting through %1$s...</string>
+    <string name="telegram_verifying_detail">Tunnel is up. Checking that Telegram answers...</string>
+    <string name="telegram_hint">Pick a connection method, tap Connect, then log in to Telegram.</string>
+    <string name="telegram_read">Read List</string>
+    <string name="telegram_save">Save List (%1$d)</string>
+    <string name="telegram_logout">Logout</string>
+    <string name="telegram_logout_title">Log out of Telegram?</string>
+    <string name="telegram_logout_wipe">Log out and wipe data</string>
+    <string name="telegram_logout_keep">Keep session</string>
+    <string name="telegram_status_idle">Idle</string>
+    <string name="telegram_status_connecting">Connecting</string>
+    <string name="telegram_status_verifying">Checking</string>
+    <string name="telegram_status_connected">Connected</string>
+    <string name="telegram_status_no_internet">No internet</string>
+    <string name="telegram_status_error">Error</string>
+    <string name="telegram_ping">Telegram ping: %1$s</string>
+    <string name="telegram_ping_ms">%1$d ms</string>
+    <string name="telegram_speed">Speed: %1$s down / %2$s up</string>
+    <string name="telegram_no_value">unknown</string>
+    <string name="telegram_active_server">Active server: %1$s</string>
+    <string name="telegram_no_server">No server</string>
+    <string name="telegram_servers">Servers</string>
+    <string name="telegram_refresh">Refresh</string>
+    <string name="telegram_log">Log</string>
+    <string name="telegram_log_hide">Hide log</string>
+    <string name="telegram_log_clear">Clear</string>
+    <string name="telegram_error_no_config">No WhiteDNS profile is saved.</string>
+    <string name="telegram_error_unsupported_webview">WebView proxy override is not supported on this device.</string>
+    <string name="telegram_error_tunnel_failed">Failed to start the WhiteDNS tunnel: %1$s</string>
+    <string name="telegram_status_found">%1$d DNS IP(s) detected in chat</string>
+    <string name="telegram_status_none">No IP addresses detected on screen</string>
+    <string name="telegram_saved_ok">Saved %1$d DNS servers to scanner</string>
+    <string name="telegram_error_method">Could not connect: %1$s</string>
+    <string name="telegram_error_main_off">Start the main tunnel first.</string>
+    <string name="telegram_error_protocol">The tunnel did not come up with this protocol.</string>
+    <string name="telegram_error_upstream_off">Enable Napster or V2Ray first.</string>
+    <string name="telegram_error_storage_permission">Allow storage access to save the file.</string>
+    <string name="telegram_download_saved">Saved to %1$s</string>
+    <string name="telegram_download_failed">Download failed</string>
+    <string name="telegram_download_too_large">The file is too large</string>
+    <string name="telegram_proxy_lost">The connection dropped. Tap Connect again.</string>
+    <string-array name="telegram_method_names">
+        <item>WhiteDNS</item>
+        <item>V2Ray</item>
+        <item>Napster</item>
+        <item>Main tunnel</item>
+        <item>Combined</item>
+        <item>Conduit</item>
+        <item>CDN fronting</item>
+    </string-array>
+</resources>

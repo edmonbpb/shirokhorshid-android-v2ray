@@ -33,6 +33,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.CheckBoxPreference;
 import androidx.preference.EditTextPreference;
@@ -221,6 +222,7 @@ public class MoreOptionsPreferenceActivity extends LocalizedActivities.AppCompat
             setupLanguageSelector(preferences);
             setupDisguise(preferences);
             setupConduitSettings(preferences, preferenceGetter);
+            setupWhiteDns(preferences);
             setupNetworkSharing(preferences, preferenceGetter);
             setupAbouts(preferences);
         }
@@ -290,6 +292,15 @@ public class MoreOptionsPreferenceActivity extends LocalizedActivities.AppCompat
                     break;
                 case "direct":
                     preference.setSummary(getString(R.string.protocolSelectionSummaryDirect));
+                    break;
+                case "whitedns":
+                    preference.setSummary(getString(R.string.protocolSelectionSummaryWhitedns));
+                    break;
+                case "napster":
+                    preference.setSummary(getString(R.string.protocolSelectionSummaryNapster));
+                    break;
+                case "v2ray":
+                    preference.setSummary(getString(R.string.protocolSelectionSummaryV2ray));
                     break;
                 case "auto":
                 default:
@@ -606,6 +617,44 @@ public class MoreOptionsPreferenceActivity extends LocalizedActivities.AppCompat
                     break;
             }
             preference.setSummary(String.format(getString(R.string.conduitTimeoutSummary), label));
+        }
+
+        private void setupWhiteDns(PreferenceScreen preferences) {
+            Preference whiteDnsPreference =
+                    preferences.findPreference(getString(R.string.slipnetTestPreferenceKey));
+            if (whiteDnsPreference != null) {
+                whiteDnsPreference.setOnPreferenceClickListener(preference -> {
+                    final FragmentActivity activity = getActivity();
+                    if (activity != null && !activity.isFinishing()) {
+                        startActivity(new Intent(activity, SlipNetTestActivity.class));
+                    }
+                    return true;
+                });
+            }
+
+            Preference napsterPreference =
+                    preferences.findPreference(getString(R.string.napsterOptionsPreferenceKey));
+            if (napsterPreference != null) {
+                napsterPreference.setOnPreferenceClickListener(preference -> {
+                    final FragmentActivity activity = getActivity();
+                    if (activity != null && !activity.isFinishing()) {
+                        startActivity(new Intent(activity, NapsterActivity.class));
+                    }
+                    return true;
+                });
+            }
+
+            Preference v2rayPreference =
+                    preferences.findPreference(getString(R.string.v2rayOptionsPreferenceKey));
+            if (v2rayPreference != null) {
+                v2rayPreference.setOnPreferenceClickListener(preference -> {
+                    final FragmentActivity activity = getActivity();
+                    if (activity != null && !activity.isFinishing()) {
+                        startActivity(new Intent(activity, V2RayPreferenceActivity.class));
+                    }
+                    return true;
+                });
+            }
         }
 
         private void setupNetworkSharing(PreferenceScreen preferences, PreferenceGetter preferenceGetter) {

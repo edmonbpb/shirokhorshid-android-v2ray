@@ -76,6 +76,25 @@
             android:defaultValue="true" />
     </PreferenceCategory>
     <PreferenceCategory
+        android:key="connectionEnginesCategory"
+        android:title="@string/preference_category_connection_engines_title">
+        <Preference
+            android:icon="@drawable/baseline_device_hub_white_24"
+            android:key="@string/slipnetTestPreferenceKey"
+            android:summary="@string/whitedns_more_summary"
+            android:title="@string/label_slipnet_test" />
+        <Preference
+            android:icon="@drawable/baseline_device_hub_white_24"
+            android:key="@string/napsterOptionsPreferenceKey"
+            android:summary="@string/napster_more_summary"
+            android:title="@string/label_napster_settings" />
+        <Preference
+            android:icon="@drawable/baseline_device_hub_white_24"
+            android:key="@string/v2rayOptionsPreferenceKey"
+            android:summary="@string/v2ray_more_summary"
+            android:title="@string/label_v2ray_settings" />
+    </PreferenceCategory>
+    <PreferenceCategory
         android:key="cdnFrontingCategory"
         android:title="@string/preference_category_cdn_fronting_title">
         <Preference

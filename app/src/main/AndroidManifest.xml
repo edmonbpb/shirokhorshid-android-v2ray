@@ -21,11 +21,15 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:node="remove"/>
     <!-- instruct manifest merger to remove any external storage permissions from the final manifest -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" tools:node="remove"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" tools:node="remove"/>
+    <!-- the Telegram download folder needs this only on Android 9 and older -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+    <uses-permission android:name="android.permission.USE_FINGERPRINT" android:maxSdkVersion="28"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
     <uses-permission android:name="android.permission.NFC" />
@@ -191,6 +195,70 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MainActivity" />
         </activity>
+        <activity
+            android:name=".psiphonlibrary.SlipNetTestActivity"
+            android:parentActivityName=".MainActivity"
+            android:label="@string/label_slipnet_test">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+        <activity
+            android:name=".psiphonlibrary.SlipNetLogActivity"
+            android:parentActivityName=".psiphonlibrary.SlipNetTestActivity"
+            android:label="@string/label_slipnet_logs">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".psiphonlibrary.SlipNetTestActivity" />
+        </activity>
+        <activity
+            android:name=".psiphonlibrary.SlipNetScannerActivity"
+            android:parentActivityName=".psiphonlibrary.SlipNetTestActivity"
+            android:label="@string/label_slipnet_scanner">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".psiphonlibrary.SlipNetTestActivity" />
+        </activity>
+        <activity
+            android:name=".psiphonlibrary.TelegramWebActivity"
+            android:exported="false"
+            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize"
+            android:windowSoftInputMode="adjustResize"
+            android:label="@string/telegram_title" />
+        <activity
+            android:name=".psiphonlibrary.NapsterActivity"
+            android:label="@string/napster_title"
+            android:exported="false" />
+        <activity
+            android:name=".psiphonlibrary.TelegramServersActivity"
+            android:parentActivityName=".MainActivity"
+            android:label="@string/telegram_servers_title"
+            android:exported="false">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+        <activity
+            android:name=".psiphonlibrary.AppLockPreferenceActivity"
+            android:parentActivityName=".MainActivity"
+            android:label="@string/app_lock_title"
+            android:exported="false">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+        <activity
+            android:name=".psiphonlibrary.SlipNetScanResultsActivity"
+            android:parentActivityName=".psiphonlibrary.SlipNetTestActivity"
+            android:label="@string/slipnet_scan_results_title">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".psiphonlibrary.SlipNetTestActivity" />
+        </activity>
+        <service
+            android:name=".psiphonlibrary.SlipNetScanService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
         <activity android:theme="@style/Theme.DialogAlert"
             android:excludeFromRecents="true"
             android:name=".NotificationPermissionRationaleActivity" />

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_lock_title">امنیت</string>
+    <string name="app_lock_note">با این تنظیم، برنامه پیش از باز شدن قفل صفحه گوشی را می‌پرسد.</string>
+    <string name="app_lock_none">خاموش</string>
+    <string name="app_lock_biometric">اثر انگشت یا چهره</string>
+    <string name="app_lock_device">پین، الگو یا رمز عبور گوشی</string>
+    <string name="app_lock_any">اثر انگشت یا چهره، یا پین گوشی</string>
+    <string name="app_lock_saved">ذخیره شد</string>
+    <string name="app_lock_not_secure">گوشی قفل صفحه ندارد. اول یک قفل تنظیم کنید.</string>
+    <string name="app_lock_open_settings">باز کردن تنظیمات امنیتی گوشی</string>
+    <string name="app_lock_unavailable_biometric">روی این گوشی در دسترس نیست</string>
+    <string name="app_lock_unavailable_device">اول قفل صفحه گوشی را تنظیم کنید</string>
+    <string name="app_lock_unavailable_any">روی این گوشی در دسترس نیست</string>
+    <string name="app_lock_available_note">امکانات این گوشی</string>
+    <string name="app_lock_locked_title">قفل شده</string>
+    <string name="app_lock_locked_message">برای باز کردن شیر و خورشید، قفل را باز کنید</string>
+    <string name="app_lock_unlock">باز کردن</string>
+</resources>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="telegram_title">تلگرام</string>
+    <string name="telegram_close">بستن</string>
+    <string name="telegram_connect">اتصال</string>
+    <string name="telegram_disconnect">قطع اتصال</string>
+    <string name="telegram_try_again">تلاش دوباره</string>
+    <string name="telegram_connecting">در حال اتصال تونل...</string>
+    <string name="telegram_connected">تونل متصل شد. در حال بارگذاری تلگرام...</string>
+    <string name="telegram_connecting_method">در حال اتصال از راه %1$s...</string>
+    <string name="telegram_verifying_detail">تونل برقرار شد. در حال بررسی پاسخ تلگرام...</string>
+    <string name="telegram_hint">روش اتصال را انتخاب کنید، اتصال را بزنید و بعد وارد تلگرام شوید.</string>
+    <string name="telegram_read">خواندن فهرست</string>
+    <string name="telegram_save">ذخیره فهرست (%1$d)</string>
+    <string name="telegram_logout">خروج از حساب</string>
+    <string name="telegram_logout_title">از حساب تلگرام خارج می‌شوید؟</string>
+    <string name="telegram_logout_wipe">خروج و پاک کردن داده‌ها</string>
+    <string name="telegram_logout_keep">نگه داشتن نشست</string>
+    <string name="telegram_status_idle">آماده</string>
+    <string name="telegram_status_connecting">در حال اتصال</string>
+    <string name="telegram_status_verifying">در حال بررسی</string>
+    <string name="telegram_status_connected">متصل</string>
+    <string name="telegram_status_no_internet">اینترنت وصل نیست</string>
+    <string name="telegram_status_error">خطا</string>
+    <string name="telegram_ping">پینگ تلگرام: %1$s</string>
+    <string name="telegram_ping_ms">%1$d میلی‌ثانیه</string>
+    <string name="telegram_speed">سرعت: %1$s دریافت / %2$s ارسال</string>
+    <string name="telegram_no_value">نامشخص</string>
+    <string name="telegram_active_server">سرور فعال: %1$s</string>
+    <string name="telegram_no_server">بدون سرور</string>
+    <string name="telegram_servers">سرورها</string>
+    <string name="telegram_refresh">تازه‌سازی</string>
+    <string name="telegram_log">گزارش</string>
+    <string name="telegram_log_hide">بستن گزارش</string>
+    <string name="telegram_log_clear">پاک کردن</string>
+    <string name="telegram_error_no_config">هیچ پروفایل WhiteDNS ذخیره نشده است.</string>
+    <string name="telegram_error_unsupported_webview">پراکسی وب‌ویو روی این دستگاه پشتیبانی نمی‌شود.</string>
+    <string name="telegram_error_tunnel_failed">خطا در راه‌اندازی تونل WhiteDNS: %1$s</string>
+    <string name="telegram_status_found">%1$d آدرس آی‌پی DNS در صفحه پیدا شد</string>
+    <string name="telegram_status_none">هیچ آدرس آی‌پی در صفحه پیدا نشد</string>
+    <string name="telegram_saved_ok">%1$d آدرس DNS در اسکنر ذخیره شد</string>
+    <string name="telegram_error_method">اتصال برقرار نشد: %1$s</string>
+    <string name="telegram_error_main_off">اول تونل اصلی را روشن کنید.</string>
+    <string name="telegram_error_protocol">تونل با این پروتکل بالا نیامد.</string>
+    <string name="telegram_error_upstream_off">اول نپستر یا V2Ray را روشن کنید.</string>
+    <string name="telegram_error_storage_permission">برای ذخیرهٔ فایل، اجازهٔ دسترسی به حافظه را بدهید.</string>
+    <string name="telegram_download_saved">در %1$s ذخیره شد</string>
+    <string name="telegram_download_failed">دانلود انجام نشد</string>
+    <string name="telegram_download_too_large">فایل خیلی بزرگ است</string>
+    <string name="telegram_proxy_lost">اتصال قطع شد. دوباره اتصال را بزنید.</string>
+    <string-array name="telegram_method_names">
+        <item>WhiteDNS</item>
+        <item>V2Ray</item>
+        <item>نپستر</item>
+        <item>تونل اصلی</item>
+        <item>ترکیبی</item>
+        <item>Conduit</item>
+        <item>CDN fronting</item>
+    </string-array>
+</resources>

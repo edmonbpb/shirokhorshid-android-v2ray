@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="napster_title">نپستر</string>
+    <string name="napster_home_title">اتصال نپستر</string>
+    <string name="napster_home_status_off">خاموش</string>
+    <string name="napster_home_status_on">روشن: %1$s</string>
+    <string name="napster_home_no_config">روشن است، ولی کانفیگی انتخاب نشده</string>
+    <string name="napster_home_manage">مدیریت</string>
+    <string name="napster_enable">استفاده از نپستر به عنوان پل اتصال</string>
+    <string name="napster_add_file">افزودن فایل</string>
+    <string name="napster_test">تست</string>
+    <string name="napster_delete">حذف</string>
+    <string name="napster_empty">هنوز کانفیگ نپستری ندارید. یک فایل npvt یا npvs اضافه کنید.</string>
+    <string name="napster_select_hint">یک کانفیگ را انتخاب کنید و سپس کلید را روشن کنید.</string>
+    <string name="napster_apply_next_connect">ذخیره شد. در اتصال بعدی اعمال می‌شود.</string>
+    <string name="napster_testing">در حال تست کانفیگ انتخاب‌شده...</string>
+    <string name="napster_test_ok">کانفیگ درست کار می‌کند.</string>
+    <string name="napster_test_failed">تست ناموفق بود: %1$s</string>
+    <string name="napster_delete_confirm">«%1$s» حذف شود؟</string>
+    <string name="napster_delete_yes">حذف</string>
+    <string name="napster_cancel">انصراف</string>
+    <string name="napster_no_selection">اول یک کانفیگ را انتخاب کنید.</string>
+    <string name="napster_import_ok">%1$d کانفیگ اضافه شد</string>
+    <string name="napster_import_partial">%1$d کانفیگ اضافه شد، %2$d مورد ناموفق بود</string>
+    <string name="napster_import_empty">هیچ کانفیگ معتبری در فایل پیدا نشد</string>
+    <string name="napster_import_failed">خطا در خواندن فایل: %1$s</string>
+    <string name="napster_file_too_large">حجم فایل بیشتر از ۸ مگابایت است</string>
+    <string name="napster_start_failed">خطا در راه‌اندازی نپستر: %1$s</string>
+    <string name="napster_ping_all">پینگ همهٔ لینک‌ها</string>
+    <string name="napster_check_all">بررسی همه لینک‌ها</string>
+    <string name="napster_checking_progress">بررسی %1$d از %2$d</string>
+    <string name="napster_auto_check">بررسی خودکار هر ۱۵ دقیقه</string>
+    <string name="napster_health_healthy">سالم</string>
+    <string name="napster_health_semi">فقط اینترنت</string>
+    <string name="napster_health_suspicious">مشکوک</string>
+    <string name="napster_health_dead">مرده</string>
+    <string name="napster_health_unknown">نامشخص</string>
+    <string name="napster_health_detail">اینترنت %1$d میلی‌ثانیه · تلگرام %2$d میلی‌ثانیه</string>
+    <string name="napster_health_now">همین حالا</string>
+    <string name="napster_health_minutes_ago">%1$d دقیقه پیش</string>
+    <string name="napster_health_hours_ago">%1$d ساعت پیش</string>
+    <string name="napster_ping_ms">%1$d میلی‌ثانیه</string>
+    <string name="napster_ping_timeout">بدون پاسخ</string>
+    <string name="napster_ping_waiting">…</string>
+</resources>

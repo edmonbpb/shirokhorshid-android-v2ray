@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="telegram_servers_title">Servers</string>
+    <string name="telegram_servers_note">Tap a server to use it on the next connection</string>
+    <string name="telegram_servers_none">This method has no separate server list</string>
+    <string name="telegram_servers_no_reply">no reply</string>
+    <string name="telegram_servers_active">Active</string>
+    <string name="telegram_servers_ping_ms">%1$d ms</string>
+    <string name="telegram_servers_next_connection">Saved for the next connection</string>
+</resources>

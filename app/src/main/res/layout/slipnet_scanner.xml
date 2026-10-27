@@ -1,0 +1,447 @@
+<!-- Derived from SlipNet (github.com/anonvector/SlipNet), AGPL-3.0. -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/slipnet_scanner_summary"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/slipnet_scanner_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/slipnet_scan_mode" />
+
+        <Spinner
+            android:id="@+id/slipnet_scanner_mode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/slipnet_scan_source" />
+
+        <Spinner
+            android:id="@+id/slipnet_scanner_source"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" />
+
+        <LinearLayout
+            android:id="@+id/slipnet_scanner_country_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <Spinner
+                android:id="@+id/slipnet_scanner_country"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/slipnet_scan_sample" />
+
+            <EditText
+                android:id="@+id/slipnet_scanner_sample"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:inputType="number"
+                android:text="500" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/slipnet_scanner_custom_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/slipnet_scanner_custom"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="top|start"
+                android:hint="@string/slipnet_scan_source_custom"
+                android:inputType="textMultiLine|textNoSuggestions"
+                android:minLines="3" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/slipnet_scanner_telegram_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/slipnet_scanner_telegram_hint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/slipnet_scan_telegram_hint" />
+
+            <TextView
+                android:id="@+id/slipnet_scanner_telegram_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/slipnet_scanner_telegram_open"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/slipnet_scan_telegram_open" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/slipnet_scan_domain" />
+
+        <EditText
+            android:id="@+id/slipnet_scanner_domain"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:inputType="textNoSuggestions" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/slipnet_scan_port" />
+
+        <EditText
+            android:id="@+id/slipnet_scanner_port"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:inputType="number"
+            android:text="53" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/slipnet_scan_timeout" />
+
+        <EditText
+            android:id="@+id/slipnet_scanner_timeout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:inputType="number"
+            android:text="3000" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/slipnet_scan_workers" />
+
+        <EditText
+            android:id="@+id/slipnet_scanner_workers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:inputType="number"
+            android:text="50" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/slipnet_scan_e2e_timeout" />
+
+        <EditText
+            android:id="@+id/slipnet_scanner_e2e_timeout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:inputType="number"
+            android:text="15000" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/slipnet_scan_e2e_workers" />
+
+        <EditText
+            android:id="@+id/slipnet_scanner_e2e_workers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:inputType="number"
+            android:text="6" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/slipnet_scan_min_score" />
+
+        <EditText
+            android:id="@+id/slipnet_scanner_min_score"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:inputType="number"
+            android:text="2" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/slipnet_scan_url" />
+
+        <EditText
+            android:id="@+id/slipnet_scanner_url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:inputType="textNoSuggestions" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/slipnet_scan_probes" />
+
+        <EditText
+            android:id="@+id/slipnet_scanner_probes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:inputType="number"
+            android:text="5" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/slipnet_scan_threshold" />
+
+        <EditText
+            android:id="@+id/slipnet_scanner_threshold"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:inputType="number"
+            android:text="2" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/slipnet_scan_response_size" />
+
+        <EditText
+            android:id="@+id/slipnet_scanner_response_size"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:inputType="number"
+            android:text="0" />
+
+        <CheckBox
+            android:id="@+id/slipnet_scanner_prefilter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/slipnet_scan_prefilter" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/slipnet_scan_prefilter_timeout" />
+
+        <EditText
+            android:id="@+id/slipnet_scanner_prefilter_timeout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:inputType="number"
+            android:text="1500" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/slipnet_scan_transport" />
+
+        <Spinner
+            android:id="@+id/slipnet_scanner_transport"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" />
+
+        <CheckBox
+            android:id="@+id/slipnet_scanner_full"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/slipnet_scan_full" />
+
+        <CheckBox
+            android:id="@+id/slipnet_scanner_shuffle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/slipnet_scan_shuffle" />
+
+        <CheckBox
+            android:id="@+id/slipnet_scanner_expand"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/slipnet_scan_expand" />
+
+        <TextView
+            android:id="@+id/slipnet_scanner_preview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/slipnet_scanner_start"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/slipnet_scan_start" />
+
+            <Button
+                android:id="@+id/slipnet_scanner_stop"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:layout_weight="1"
+                android:text="@string/slipnet_scan_stop" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/slipnet_scanner_continue"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/slipnet_scan_continue" />
+
+            <Button
+                android:id="@+id/slipnet_scanner_results"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:layout_weight="1"
+                android:text="@string/slipnet_scan_results" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ProgressBar
+                android:id="@+id/slipnet_scanner_progress_bar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="100" />
+
+            <TextView
+                android:id="@+id/slipnet_scanner_progress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/slipnet_scanner_found"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/slipnet_scanner_passed"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/slipnet_scanner_proxy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/slipnet_scan_proxy_warning"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/slipnet_scanner_phase"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/slipnet_scanner_live"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minLines="8"
+            android:textIsSelectable="true"
+            android:textSize="11sp"
+            android:typeface="monospace" />
+    </LinearLayout>
+</ScrollView>

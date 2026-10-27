@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="slipnet_scan_source_telegram">Telegram</string>
+    <string name="slipnet_scan_telegram_hint">Open Telegram through the WhiteDNS tunnel and save the bot\'s DNS list.</string>
+    <string name="slipnet_scan_telegram_open">Open Telegram</string>
+    <string name="slipnet_scan_telegram_count">%1$d DNS servers loaded from Telegram</string>
+    <string name="slipnet_scan_telegram_empty">No DNS list saved yet. Open Telegram to fetch from bot.</string>
+    <string name="slipnet_scan_telegram_saved_at">Saved: %1$s</string>
+</resources>

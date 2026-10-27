@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="napster_title">Napster</string>
+    <string name="napster_home_title">Napster connection</string>
+    <string name="napster_home_status_off">Off</string>
+    <string name="napster_home_status_on">On: %1$s</string>
+    <string name="napster_home_no_config">On, but no configuration is selected</string>
+    <string name="napster_home_manage">Manage</string>
+    <string name="napster_enable">Use Napster as the connection bridge</string>
+    <string name="napster_add_file">Add file</string>
+    <string name="napster_test">Test</string>
+    <string name="napster_delete">Delete</string>
+    <string name="napster_empty">No Napster configurations yet. Add a .npvt or .npvs file.</string>
+    <string name="napster_select_hint">Select one configuration, then turn the switch on.</string>
+    <string name="napster_apply_next_connect">Saved. It takes effect on the next connection.</string>
+    <string name="napster_testing">Testing the selected configuration...</string>
+    <string name="napster_test_ok">The configuration works.</string>
+    <string name="napster_test_failed">Test failed: %1$s</string>
+    <string name="napster_delete_confirm">Delete \"%1$s\"?</string>
+    <string name="napster_delete_yes">Delete</string>
+    <string name="napster_cancel">Cancel</string>
+    <string name="napster_no_selection">Select a configuration first.</string>
+    <string name="napster_import_ok">Imported %1$d configurations</string>
+    <string name="napster_import_partial">Imported %1$d configurations, %2$d failed</string>
+    <string name="napster_import_empty">No valid configurations found in the file</string>
+    <string name="napster_import_failed">Import failed: %1$s</string>
+    <string name="napster_file_too_large">The file is larger than 8 MiB</string>
+    <string name="napster_start_failed">Napster start failed: %1$s</string>
+    <string name="napster_ping_all">Ping all links</string>
+    <string name="napster_check_all">Check all links</string>
+    <string name="napster_checking_progress">Checking %1$d of %2$d</string>
+    <string name="napster_auto_check">Check automatically every 15 minutes</string>
+    <string name="napster_health_healthy">Healthy</string>
+    <string name="napster_health_semi">General only</string>
+    <string name="napster_health_suspicious">Suspicious</string>
+    <string name="napster_health_dead">Dead</string>
+    <string name="napster_health_unknown">Unknown</string>
+    <string name="napster_health_detail">Internet %1$d ms · Telegram %2$d ms</string>
+    <string name="napster_health_now">just now</string>
+    <string name="napster_health_minutes_ago">%1$d min ago</string>
+    <string name="napster_health_hours_ago">%1$d h ago</string>
+    <string name="napster_ping_ms">%1$d ms</string>
+    <string name="napster_ping_timeout">no reply</string>
+    <string name="napster_ping_waiting">…</string>
+</resources>
