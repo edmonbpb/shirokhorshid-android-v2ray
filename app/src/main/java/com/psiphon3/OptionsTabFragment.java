@@ -461,6 +461,12 @@ public class OptionsTabFragment extends PsiphonPreferenceFragmentCompat {
         SharedPreferences prefs = requireActivity()
                 .getSharedPreferences(getString(R.string.moreOptionsPreferencesName), MODE_PRIVATE);
 
+        // The protocol is written straight to the tunnel's store on selection, so the marker is
+        // the primary signal; the value comparison below only catches a lost screen-file write.
+        if (prefs.getBoolean(MoreOptionsPreferenceActivity.PREF_PROTOCOL_CHANGED_KEY, false)) {
+            return true;
+        }
+
         // check if protocol selection has changed
         String protocolSelectionNew =
                 prefs.getString(getString(R.string.protocolSelectionPreference), "auto");
@@ -602,6 +608,8 @@ public class OptionsTabFragment extends PsiphonPreferenceFragmentCompat {
     private void updateMoreSettingsFromPreferences() {
         // Import 'More Options' values to tray preferences
         String prefName = getString(R.string.moreOptionsPreferencesName);
+        requireContext().getSharedPreferences(prefName, MODE_PRIVATE).edit()
+                .remove(MoreOptionsPreferenceActivity.PREF_PROTOCOL_CHANGED_KEY).apply();
         multiProcessPreferences.migrate(
                 new SharedPreferencesImport(requireContext(), prefName, getString(R.string.preferenceNotificationsWithSound), getString(R.string.preferenceNotificationsWithSound)),
                 new SharedPreferencesImport(requireContext(), prefName, getString(R.string.preferenceNotificationsWithVibrate), getString(R.string.preferenceNotificationsWithVibrate)),
@@ -610,7 +618,6 @@ public class OptionsTabFragment extends PsiphonPreferenceFragmentCompat {
                 new SharedPreferencesImport(requireContext(), prefName, getString(R.string.disableTimeoutsPreference), getString(R.string.disableTimeoutsPreference)),
                 new SharedPreferencesImport(requireContext(), prefName, getString(R.string.autoOpenHomepagePreference), getString(R.string.autoOpenHomepagePreference)),
                 new SharedPreferencesImport(requireContext(), prefName, getString(R.string.nfcBumpPreference), getString(R.string.nfcBumpPreference)),
-                new SharedPreferencesImport(requireContext(), prefName, getString(R.string.protocolSelectionPreference), getString(R.string.protocolSelectionPreference)),
                 new SharedPreferencesImport(requireContext(), prefName, getString(R.string.cdnFrontingCustomIpListPreference), getString(R.string.cdnFrontingCustomIpListPreference)),
                 new SharedPreferencesImport(requireContext(), prefName, getString(R.string.cdnFrontingCustomSniPreference), getString(R.string.cdnFrontingCustomSniPreference)),
                 new SharedPreferencesImport(requireContext(), prefName, getString(R.string.beastModePreference), getString(R.string.beastModePreference)),

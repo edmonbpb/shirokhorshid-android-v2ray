@@ -206,6 +206,7 @@
   <string name="protocol_whitedns">تونل DNS (WhiteDNS)</string>
   <string name="protocol_napster">نپستر (هستهٔ Xray)</string>
   <string name="protocol_v2ray">وی‌تو‌ری (هستهٔ Xray)</string>
+  <string name="protocol_selection_store_failed">پروتکل اتصال ذخیره نشد</string>
   <string name="preference_category_cdn_fronting_title">فرانتینگ CDN</string>
   <string name="preference_category_cdn_fronting_description">تنظیمات اختیاری و پیشرفته برای فرانتینگ CDN. این تنظیمات در حالت‌های خودکار، مستقیم و فرانتینگ CDN استفاده می‌شوند.</string>
   <string name="cdnFrontingCustomIpListPreferenceTitle">ای‌پی‌های لبه CDN</string>

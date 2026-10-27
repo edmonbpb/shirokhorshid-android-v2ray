@@ -46,6 +46,8 @@ import androidx.preference.SwitchPreference;
 import com.psiphon3.MainActivityViewModel;
 import com.psiphon3.R;
 
+import net.grandcentrix.tray.AppPreferences;
+
 import java.util.Locale;
 
 public class MoreOptionsPreferenceActivity extends LocalizedActivities.AppCompatActivity {
@@ -65,6 +67,8 @@ public class MoreOptionsPreferenceActivity extends LocalizedActivities.AppCompat
                 .get(MainActivityViewModel.class);
         getLifecycle().addObserver(viewModel);
     }
+
+    public static final String PREF_PROTOCOL_CHANGED_KEY = "protocolSelectionChanged";
 
     public static class MoreOptionsPreferenceFragment extends PsiphonPreferenceFragmentCompat
             implements SharedPreferences.OnSharedPreferenceChangeListener {
@@ -208,6 +212,23 @@ public class MoreOptionsPreferenceActivity extends LocalizedActivities.AppCompat
 
             protocolSelectionList.setOnPreferenceChangeListener((preference, newValue) -> {
                 String protocol = (String) newValue;
+                // The tunnel reads this value from the multi-process store. Write it now so a
+                // skipped or stale batch migration can never bring an older protocol back.
+                try {
+                    AppPreferences tray = new AppPreferences(requireContext());
+                    String current = tray.getString(
+                            getString(R.string.protocolSelectionPreference), "auto");
+                    tray.put(getString(R.string.protocolSelectionPreference), protocol);
+                    if (!protocol.equals(current)) {
+                        getPreferenceManager().getSharedPreferences().edit()
+                                .putBoolean(PREF_PROTOCOL_CHANGED_KEY, true).apply();
+                    }
+                } catch (RuntimeException e) {
+                    // Refuse the change rather than persist a value the tunnel will not read.
+                    Toast.makeText(requireContext(), R.string.protocol_selection_store_failed,
+                            Toast.LENGTH_SHORT).show();
+                    return false;
+                }
                 updateProtocolSelectionSummary((ListPreference) preference, protocol);
                 if (cdnFrontingCategory != null) {
                     cdnFrontingCategory.setVisible(isCdnFrontingRelevantProtocol(protocol));

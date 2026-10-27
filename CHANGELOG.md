@@ -9,11 +9,15 @@
 
 ### Changed
 - The V2Ray and Napster rows were removed from the main Options screen; all three engines are now reachable from More Options only.
-- The Connection Protocol row now shows the correct summary for every value.
 - Telegram's CDN method no longer switches the global protocol preference or restarts the main tunnel.
+
+### Fixed
+- The Connection Protocol row now shows the correct summary for every value.
+- The selected protocol is written straight to the tunnel's store and can no longer revert to an older value after closing More Options or restarting the app. If that write fails, the change is refused and a message is shown.
 
 ### Verified on device
 - Samsung A15: Telegram → CDN fronting → Connect reached **Connected** (ping 722 ms) with the main tunnel off; the local engine started and stopped with the link, and the main tunnel never started.
+- Samsung A15: protocol choice survived close/reopen and force-stop/relaunch for both WhiteDNS and Direct.
 
 ## Earlier builds
 

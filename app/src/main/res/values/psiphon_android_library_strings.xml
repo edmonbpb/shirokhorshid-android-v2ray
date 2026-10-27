@@ -107,6 +107,7 @@
     <string name="protocol_whitedns">DNS tunnel (WhiteDNS)</string>
     <string name="protocol_napster">Napster (Xray core)</string>
     <string name="protocol_v2ray">V2Ray (Xray core)</string>
+    <string name="protocol_selection_store_failed">Could not save the connection protocol</string>
     <string name="preference_category_cdn_fronting_title">CDN Fronting</string>
     <string name="preference_category_cdn_fronting_description">Optional expert overrides for CDN fronting. These settings are used in Auto, Direct, and CDN Fronting modes.</string>
     <string name="cdnFrontingCustomIpListPreferenceTitle">CDN edge IPs</string>
