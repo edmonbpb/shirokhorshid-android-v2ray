@@ -16,13 +16,14 @@ Shir o Khorshid is a community-driven, modded build of the Psiphon open-source c
 
 | | |
 |---|---|
-| Version | 2026.10.28 |
-| APK | `ShirOKhorshid-2026.10.28.apk` |
+| Version | 2026.10.29 |
+| APK | `ShirOKhorshid-2026.10.29.apk` |
 | Minimum Android | 5.0 (API 21) for the DNS engines; the core client keeps minSdk 14 |
 
 Highlights of this release:
 
-- **Connection Protocol** now also offers Napster and V2Ray as the tunnel's upstream, next to WhiteDNS. Choosing one makes it the only way to the servers (fail closed, no silent direct fallback).
+- **In-app Telegram CDN keeps scanning like the main tunnel.** It retries until a healthy CDN route is found, restarts its own core when a scan is exhausted, and logs the workers, the route (IP and SNI), the connected protocol and the region.
+- **Connection Protocol** also offers Napster and V2Ray as the tunnel's upstream, next to WhiteDNS. Choosing one makes it the only way to the servers (fail closed, no silent direct fallback).
 - **More Options → Connection engines** groups WhiteDNS, Napster and V2Ray settings; the main Options screen is back to the core rows only.
 - **In-app Telegram: CDN fronting works standalone.** It runs its own headless tunnel core with a private CDN config copy, so it no longer needs the main VPN tunnel and cannot affect the app's own CDN path.
 

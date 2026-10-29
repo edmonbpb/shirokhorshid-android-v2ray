@@ -24,13 +24,25 @@ public final class TelegramConnector {
         public final int socksPort;
         private final Closeable tunnel;
         private final boolean releaseCore;
+        private final PsiphonLocalTunnel localTunnel;
         private boolean closed;
 
         Link(Method method, int socksPort, Closeable tunnel, boolean releaseCore) {
+            this(method, socksPort, tunnel, releaseCore, null);
+        }
+
+        Link(Method method, int socksPort, Closeable tunnel, boolean releaseCore,
+                PsiphonLocalTunnel localTunnel) {
             this.method = method;
             this.socksPort = socksPort;
             this.tunnel = tunnel;
             this.releaseCore = releaseCore;
+            this.localTunnel = localTunnel;
+        }
+
+        /** The local core behind a standalone CDN fronting link; null for every other method. */
+        public PsiphonLocalTunnel localTunnel() {
+            return localTunnel;
         }
 
         @Override
@@ -169,7 +181,7 @@ public final class TelegramConnector {
             try { localTunnel.close(); } catch (RuntimeException ignored) { }
             throw e;
         }
-        return new Link(Method.CDN_FRONTING, port, localTunnel, false);
+        return new Link(Method.CDN_FRONTING, port, localTunnel, false, localTunnel);
     }
 
     public static boolean probeSocks(int port, int timeoutMs) {

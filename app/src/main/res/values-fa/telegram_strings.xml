@@ -9,6 +9,7 @@
     <string name="telegram_connected">تونل متصل شد. در حال بارگذاری تلگرام...</string>
     <string name="telegram_connecting_method">در حال اتصال از راه %1$s...</string>
     <string name="telegram_verifying_detail">تونل برقرار شد. در حال بررسی پاسخ تلگرام...</string>
+    <string name="telegram_cdn_attempt">در حال اتصال از راه CDN fronting... تلاش %1$d</string>
     <string name="telegram_hint">روش اتصال را انتخاب کنید، اتصال را بزنید و بعد وارد تلگرام شوید.</string>
     <string name="telegram_read">خواندن فهرست</string>
     <string name="telegram_save">ذخیره فهرست (%1$d)</string>

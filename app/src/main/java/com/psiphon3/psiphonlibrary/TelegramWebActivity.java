@@ -84,6 +84,8 @@ public class TelegramWebActivity extends LocalizedActivities.AppCompatActivity {
     private static final String PROTOCOL_CONDUIT = "conduit";
     private static final int PROBE_CONNECT_TIMEOUT_MS = 6000;
     private static final int PROBE_TLS_TIMEOUT_MS = 10000;
+    private static final long CDN_PROBE_RETRY_DELAY_MS = 4000L;
+    private static final int CDN_REUSE_MAX_ATTEMPTS = 5;
     private static final long HEARTBEAT_INTERVAL_MS = 10000L;
     private static final int HEARTBEAT_TIMEOUT_MS = 4000;
     private static final long SPEED_INTERVAL_MS = 1000L;
@@ -122,6 +124,8 @@ public class TelegramWebActivity extends LocalizedActivities.AppCompatActivity {
 
     private ValueCallback<Uri[]> fileChooserCallback;
     private TelegramConnector.Link link;
+    private volatile TelegramConnector.Link pendingLink;
+    private volatile Thread connectWorker;
     private volatile TunnelState lastTunnelState;
     private boolean mainRunning;
     private int mainSocksPort;
@@ -492,7 +496,7 @@ public class TelegramWebActivity extends LocalizedActivities.AppCompatActivity {
     }
 
     private void onConnectClicked() {
-        if (state == State.CONNECTED) {
+        if (state == State.CONNECTED || state == State.CONNECTING || state == State.VERIFYING) {
             disconnect();
         } else {
             connect();
@@ -584,12 +588,23 @@ public class TelegramWebActivity extends LocalizedActivities.AppCompatActivity {
                 TelegramSessionLog.append('I', "link up, probing Telegram");
                 final TelegramConnector.Link established = result;
                 runOnUiThread(() -> onLinkEstablished(myGeneration));
-                try {
-                    probe = TelegramReachability.probe(established.socksPort,
-                            PROBE_CONNECT_TIMEOUT_MS, PROBE_TLS_TIMEOUT_MS);
-                } catch (RuntimeException e) {
-                    probe = new TelegramReachability.Result(
-                            TelegramReachability.Verdict.NO_INTERNET, 0, "probe failed");
+                if (methodToUse == TelegramConnector.Method.CDN_FRONTING) {
+                    CdnProbeRun cdn = runCdnProbes(myGeneration, established, methodToUse,
+                            tunnelReady, tunnelPort, upstream);
+                    if (cdn.cancelled) {
+                        return;
+                    }
+                    result = cdn.link;
+                    probe = cdn.probe;
+                    error = cdn.error;
+                } else {
+                    try {
+                        probe = TelegramReachability.probe(established.socksPort,
+                                PROBE_CONNECT_TIMEOUT_MS, PROBE_TLS_TIMEOUT_MS);
+                    } catch (RuntimeException e) {
+                        probe = new TelegramReachability.Result(
+                                TelegramReachability.Verdict.NO_INTERNET, 0, "probe failed");
+                    }
                 }
             }
             final TelegramConnector.Link connected = result;
@@ -598,6 +613,8 @@ public class TelegramWebActivity extends LocalizedActivities.AppCompatActivity {
             runOnUiThread(() -> onConnectFinished(myGeneration, connected, verdict, failure));
         }, "TelegramConnect");
         worker.setDaemon(true);
+        pendingLink = null;
+        connectWorker = worker;
         worker.start();
     }
 
@@ -778,6 +795,134 @@ public class TelegramWebActivity extends LocalizedActivities.AppCompatActivity {
                 + " ms (" + detail + ")");
     }
 
+    /**
+     * CDN fronting keeps the core scanning: probes again after every failure, logs the route
+     * the scan found, and restarts the tunnel when the core reports it gave up.
+     * Returns the link that is still open, the last probe and any connect error.
+     */
+    private CdnProbeRun runCdnProbes(int myGeneration, TelegramConnector.Link first,
+            TelegramConnector.Method method, boolean tunnelReady, int tunnelPort,
+            boolean upstream) {
+        CdnProbeRun run = new CdnProbeRun();
+        run.link = first;
+        pendingLink = first;
+        long lastExhausted = exhaustedCount(first);
+        boolean scanningCore = first.localTunnel() != null;
+        int maxAttempts = scanningCore ? Integer.MAX_VALUE : CDN_REUSE_MAX_ATTEMPTS;
+        int attempt = 0;
+        while (true) {
+            if (myGeneration != generation || isFinishing()) {
+                closePending(run);
+                run.cancelled = true;
+                return run;
+            }
+            if (attempt >= maxAttempts) {
+                TelegramSessionLog.append('E', "main tunnel did not answer after "
+                        + attempt + " probes");
+                closePending(run);
+                run.probe = null;
+                run.error = "the main tunnel is not answering";
+                return run;
+            }
+            attempt++;
+            final int shown = attempt;
+            TelegramSessionLog.append('I', "probe attempt " + attempt);
+            runOnUiThread(() -> {
+                if (myGeneration == generation && !isFinishing()) {
+                    setDetail(getString(R.string.telegram_cdn_attempt, shown));
+                }
+            });
+            run.probe = probeCdn(run.link.socksPort);
+            if (run.probe.verdict == TelegramReachability.Verdict.OK) {
+                TelegramSessionLog.append('I', connectedLine(run.link, attempt));
+                pendingLink = null;
+                return run;
+            }
+            TelegramSessionLog.append('W', "probe "
+                    + run.probe.verdict.name().toLowerCase(Locale.US) + " "
+                    + (run.probe.detail == null ? "" : run.probe.detail) + ", retrying");
+            PsiphonLocalTunnel tunnel = run.link.localTunnel();
+            if (tunnel != null) {
+                long exhausted = tunnel.getScanExhaustedCount();
+                boolean dead = tunnel.isExited();
+                if (dead || exhausted > lastExhausted) {
+                    if (myGeneration != generation || isFinishing()) {
+                        closePending(run);
+                        run.cancelled = true;
+                        return run;
+                    }
+                    TelegramSessionLog.append('W', dead
+                            ? "cdn core exited; restarting the tunnel"
+                            : "cdn scan exhausted; restarting the tunnel");
+                    closePending(run);
+                    try {
+                        run.link = TelegramConnector.connect(getApplicationContext(), method,
+                                tunnelReady, tunnelPort, upstream, TUNNEL_TIMEOUT_MS);
+                    } catch (IOException | RuntimeException e) {
+                        run.probe = null;
+                        run.error = e.getMessage();
+                        return run;
+                    }
+                    pendingLink = run.link;
+                    lastExhausted = exhaustedCount(run.link);
+                }
+            }
+            try {
+                Thread.sleep(CDN_PROBE_RETRY_DELAY_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                closePending(run);
+                run.cancelled = true;
+                return run;
+            }
+        }
+    }
+
+    private void closePending(CdnProbeRun run) {
+        TelegramConnector.Link open = run.link;
+        run.link = null;
+        pendingLink = null;
+        if (open != null) {
+            open.close();
+        }
+    }
+
+    private static TelegramReachability.Result probeCdn(int socksPort) {
+        try {
+            return TelegramReachability.probe(socksPort,
+                    PROBE_CONNECT_TIMEOUT_MS, PROBE_TLS_TIMEOUT_MS);
+        } catch (RuntimeException e) {
+            return new TelegramReachability.Result(
+                    TelegramReachability.Verdict.NO_INTERNET, 0, "probe failed");
+        }
+    }
+
+    private static long exhaustedCount(@Nullable TelegramConnector.Link result) {
+        PsiphonLocalTunnel tunnel = result == null ? null : result.localTunnel();
+        return tunnel == null ? 0L : tunnel.getScanExhaustedCount();
+    }
+
+    private static String connectedLine(TelegramConnector.Link result, int attempts) {
+        PsiphonLocalTunnel tunnel = result == null ? null : result.localTunnel();
+        StringBuilder line = new StringBuilder("connected");
+        boolean first = appendPart(line, true, "region",
+                tunnel == null ? null : tunnel.getConnectedRegion());
+        first = appendPart(line, first, "exit", tunnel == null ? null : tunnel.getExitAddress());
+        appendPart(line, first, "route", tunnel == null ? null : tunnel.getFoundRoute());
+        line.append(", attempts ").append(attempts);
+        return line.toString();
+    }
+
+    /** Appends "label value" and returns whether the next part is still the first one. */
+    private static boolean appendPart(StringBuilder line, boolean first, String label,
+            String value) {
+        if (value == null || value.isEmpty()) {
+            return first;
+        }
+        line.append(first ? ": " : ", ").append(label).append(' ').append(value);
+        return false;
+    }
+
     private void applyProxy(final int socksPort, final int myGeneration) {
         try {
             ProxyConfig config = new ProxyConfig.Builder()
@@ -833,6 +978,15 @@ public class TelegramWebActivity extends LocalizedActivities.AppCompatActivity {
 
     private void disconnect() {
         generation++;
+        Thread worker = connectWorker;
+        if (worker != null) {
+            worker.interrupt();
+        }
+        TelegramConnector.Link pending = pendingLink;
+        pendingLink = null;
+        if (pending != null) {
+            pending.close();
+        }
         stopHeartbeat();
         stopSpeed();
         resetSpeedBaseline();
@@ -874,14 +1028,15 @@ public class TelegramWebActivity extends LocalizedActivities.AppCompatActivity {
         }
         tvState.setText(stateLabel());
         tvState.setTextColor(stateColor());
-        if (state == State.CONNECTED) {
+        if (state == State.CONNECTED || state == State.CONNECTING || state == State.VERIFYING) {
             btnConnect.setText(R.string.telegram_disconnect);
         } else if (link != null) {
             btnConnect.setText(R.string.telegram_try_again);
         } else {
             btnConnect.setText(R.string.telegram_connect);
         }
-        btnConnect.setEnabled(state != State.CONNECTING && state != State.VERIFYING);
+        // A tap during connecting or verifying cancels, so the button stays enabled.
+        btnConnect.setEnabled(true);
         boolean methodLocked = state == State.CONNECTED || state == State.CONNECTING
                 || state == State.VERIFYING;
         spMethod.setEnabled(!methodLocked);
@@ -1456,5 +1611,13 @@ public class TelegramWebActivity extends LocalizedActivities.AppCompatActivity {
             webView = null;
         }
         super.onDestroy();
+    }
+
+    /** Outcome of the CDN probe loop: the open link, the last probe and any connect error. */
+    private static final class CdnProbeRun {
+        TelegramConnector.Link link;
+        TelegramReachability.Result probe;
+        String error;
+        boolean cancelled;
     }
 }

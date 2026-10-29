@@ -9,6 +9,7 @@
     <string name="telegram_connected">Tunnel connected. Loading Telegram...</string>
     <string name="telegram_connecting_method">Connecting through %1$s...</string>
     <string name="telegram_verifying_detail">Tunnel is up. Checking that Telegram answers...</string>
+    <string name="telegram_cdn_attempt">Connecting through CDN fronting... attempt %1$d</string>
     <string name="telegram_hint">Pick a connection method, tap Connect, then log in to Telegram.</string>
     <string name="telegram_read">Read List</string>
     <string name="telegram_save">Save List (%1$d)</string>

@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026.10.29
+
+### Fixed
+- In-app Telegram CDN fronting no longer gives up after a few attempts. The tunnel core now stays alive while its workers scan, Telegram is retried every 4 seconds, the core is restarted when the scan is exhausted or the core exits, and a tap on the button cancels immediately.
+
+### Added
+- The Telegram log now shows the CDN scan (workers and progress), the route it found (IP and SNI), the connected protocol and region, and which attempt succeeded.
+
+### Verified on device
+- Samsung A15, main tunnel off: connected after 20 attempts (~80 s) via `FRONTED-MEEK-CDN-OSSH` to `2.21.2.104` (region US); Telegram ping 977 ms; Disconnect closed the local core.
+
 ## 2026.10.28
 
 ### Added
