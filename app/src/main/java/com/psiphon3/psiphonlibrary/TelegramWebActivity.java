@@ -51,6 +51,7 @@ import androidx.webkit.WebViewFeature;
 import org.json.JSONTokener;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -82,6 +83,7 @@ public class TelegramWebActivity extends LocalizedActivities.AppCompatActivity {
     private static final long TUNNEL_POLL_INTERVAL_MS = 250L;
     private static final String PROTOCOL_AUTO = "auto";
     private static final String PROTOCOL_CONDUIT = "conduit";
+    private static final String KEY_PROTOCOL_RESTORE = "telegram_protocol_restore_pending";
     private static final int PROBE_CONNECT_TIMEOUT_MS = 6000;
     private static final int PROBE_TLS_TIMEOUT_MS = 10000;
     private static final long CDN_PROBE_RETRY_DELAY_MS = 4000L;
@@ -91,7 +93,6 @@ public class TelegramWebActivity extends LocalizedActivities.AppCompatActivity {
     private static final long SPEED_INTERVAL_MS = 1000L;
     private static final long LOG_REFRESH_INTERVAL_MS = 500L;
     private static final int MAX_HEARTBEAT_FAILURES = 2;
-    private static final int MAX_TEXT_BYTES = 2 * 1024 * 1024; // 2 MiB
     private static final int REQUEST_FILE_CHOOSER = 4103;
     private static final int REQUEST_SERVERS = 4105;
 
@@ -139,7 +140,7 @@ public class TelegramWebActivity extends LocalizedActivities.AppCompatActivity {
     private boolean resumed;
     private boolean suppressMethodAutoOpen;
     private boolean logVisible;
-    private String lastExtractedText = "";
+    private final List<String> lastExtractedAddresses = new ArrayList<>();
     private int lastExtractedCount;
 
     private State state = State.IDLE;
@@ -174,6 +175,8 @@ public class TelegramWebActivity extends LocalizedActivities.AppCompatActivity {
         }
         scannerMode = getIntent() != null
                 && getIntent().getBooleanExtra(EXTRA_SCANNER_MODE, false);
+
+        restorePendingProtocol();
 
         spMethod = findViewById(R.id.sp_telegram_method);
         btnConnect = findViewById(R.id.btn_telegram_connect);
@@ -671,13 +674,64 @@ public class TelegramWebActivity extends LocalizedActivities.AppCompatActivity {
     }
 
     private void applyProtocolChange(String key, String current, String target) {
+        String restore = current == null ? PROTOCOL_AUTO : current;
+        AppPreferences prefs;
         try {
-            new AppPreferences(this).put(key, target);
+            prefs = new AppPreferences(this);
         } catch (RuntimeException e) {
+            return;
+        }
+        boolean markerWritten = false;
+        try {
+            // Remember the previous value first, so a process death while connecting can put it
+            // back on the next start. An older marker holds the user's original choice, so it
+            // wins over the value this attempt is about to replace.
+            if (prefs.getString(KEY_PROTOCOL_RESTORE, null) == null) {
+                prefs.put(KEY_PROTOCOL_RESTORE, restore);
+                markerWritten = true;
+            }
+        } catch (RuntimeException e) {
+            // Without a marker an interrupted connect could never be undone, so the stored
+            // choice stays untouched rather than being overwritten unprotected.
+            return;
+        }
+        try {
+            prefs.put(key, target);
+        } catch (RuntimeException e) {
+            if (markerWritten) {
+                removeProtocolMarker(prefs);
+            }
             return;
         }
         savedProtocol = current;
         protocolChangedByUs = true;
+    }
+
+    /** Puts back a protocol value an earlier run overwrote before the process died. */
+    private void restorePendingProtocol() {
+        try {
+            AppPreferences prefs = new AppPreferences(this);
+            String pending = prefs.getString(KEY_PROTOCOL_RESTORE, null);
+            if (pending == null) {
+                return;
+            }
+            String key = getString(R.string.protocolSelectionPreference);
+            // The marker may only undo our own write: if the current value is no longer the one
+            // we installed, the user has chosen since and that choice stays.
+            if (PROTOCOL_CONDUIT.equals(prefs.getString(key, PROTOCOL_AUTO))) {
+                prefs.put(key, pending);
+            }
+            // Drop the marker only after the write, so a failed restore retries on the next start.
+            prefs.remove(KEY_PROTOCOL_RESTORE);
+        } catch (RuntimeException ignored) {
+        }
+    }
+
+    private void removeProtocolMarker(AppPreferences prefs) {
+        try {
+            prefs.remove(KEY_PROTOCOL_RESTORE);
+        } catch (RuntimeException ignored) {
+        }
     }
 
     private int waitForTunnel(int myGeneration, boolean expectDownFirst) {
@@ -731,8 +785,9 @@ public class TelegramWebActivity extends LocalizedActivities.AppCompatActivity {
             String restore = savedProtocol == null ? PROTOCOL_AUTO : savedProtocol;
             savedProtocol = PROTOCOL_AUTO;
             try {
-                new AppPreferences(this).put(
-                        getString(R.string.protocolSelectionPreference), restore);
+                AppPreferences prefs = new AppPreferences(this);
+                prefs.put(getString(R.string.protocolSelectionPreference), restore);
+                prefs.remove(KEY_PROTOCOL_RESTORE);
                 TelegramSessionLog.append('I', "protocol restored to " + restore);
             } catch (RuntimeException ignored) {
             }
@@ -1409,7 +1464,8 @@ public class TelegramWebActivity extends LocalizedActivities.AppCompatActivity {
 
             List<String> ips = ResolverPool.parse(text);
             if (!ips.isEmpty()) {
-                lastExtractedText = text;
+                lastExtractedAddresses.clear();
+                lastExtractedAddresses.addAll(ips);
                 lastExtractedCount = ips.size();
                 tvStatus.setText(getString(R.string.telegram_status_found, lastExtractedCount));
                 btnSave.setText(getString(R.string.telegram_save, lastExtractedCount));
@@ -1424,17 +1480,23 @@ public class TelegramWebActivity extends LocalizedActivities.AppCompatActivity {
     }
 
     private void saveList() {
-        if (lastExtractedCount == 0 || lastExtractedText.isEmpty()) {
+        if (lastExtractedCount == 0 || lastExtractedAddresses.isEmpty()) {
+            // Nothing to store, and any page text an older version left behind must go.
+            getPrefs().edit().remove(KEY_TELEGRAM_TEXT).apply();
             return;
         }
 
-        String toSave = lastExtractedText;
-        if (toSave.length() > MAX_TEXT_BYTES) {
-            toSave = toSave.substring(0, MAX_TEXT_BYTES);
+        // Only the addresses are stored, one per line; the page text stays in memory.
+        StringBuilder toSave = new StringBuilder();
+        for (int index = 0; index < lastExtractedAddresses.size(); index++) {
+            if (index > 0) {
+                toSave.append('\n');
+            }
+            toSave.append(lastExtractedAddresses.get(index));
         }
 
         getPrefs().edit()
-                .putString(KEY_TELEGRAM_TEXT, toSave)
+                .putString(KEY_TELEGRAM_TEXT, toSave.toString())
                 .putInt(KEY_TELEGRAM_COUNT, lastExtractedCount)
                 .putLong(KEY_TELEGRAM_SAVED_AT, System.currentTimeMillis())
                 .apply();
@@ -1447,7 +1509,7 @@ public class TelegramWebActivity extends LocalizedActivities.AppCompatActivity {
     }
 
     private void resetExtracted() {
-        lastExtractedText = "";
+        lastExtractedAddresses.clear();
         lastExtractedCount = 0;
         if (btnSave != null) {
             btnSave.setText(getString(R.string.telegram_save, 0));

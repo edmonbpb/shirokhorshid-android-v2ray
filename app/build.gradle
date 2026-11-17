@@ -80,7 +80,8 @@ task generateEmbeddedValues {
             def listFile = new File(serverListFilePath)
             if (listFile.exists()) {
                 def entries = listFile.readLines().findAll { it.trim() }
-                serverListEntries = entries.collect { "\"${it}\"" }.join(', ')
+                def escapeLiteral = { String s -> s.replace('\\', '\\\\').replace('"', '\\"') }
+                serverListEntries = entries.collect { "\"${escapeLiteral(it)}\"" }.join(', ')
                 logger.lifecycle("Read ${entries.size()} server entries from file")
             }
         } else if (serverList) {

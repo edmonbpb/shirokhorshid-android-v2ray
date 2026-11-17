@@ -21,6 +21,9 @@ import android.widget.TextView;
 import com.psiphon3.R;
 
 import java.lang.ref.WeakReference;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Set;
 
 /**
  * Shows the app lock over whichever activity is in front and keeps it there until the
@@ -44,10 +47,14 @@ public final class AppLockGate {
     private static boolean locked = true;
     private static long backgroundAt;
     private static boolean promptActive;
-    private static int resumedActivities = 0;
+    // Identity set: one entry per activity that got onResume and no matching onPause
+    // yet. Every pause removes exactly its own activity, so rotation and prompt
+    // pauses can never leave a stale entry that keeps the re-lock from arming.
+    private static final Set<Activity> resumedActivities =
+            Collections.newSetFromMap(new IdentityHashMap<Activity, Boolean>());
     private static final Handler S_HANDLER = new Handler(Looper.getMainLooper());
     private static final Runnable S_LOCK_RUNNABLE = () -> {
-        if (resumedActivities <= 0) {
+        if (resumedActivities.isEmpty()) {
             locked = true;
         }
     };
@@ -68,7 +75,7 @@ public final class AppLockGate {
         if (activity == null || activity.isFinishing()) {
             return;
         }
-        resumedActivities++;
+        resumedActivities.add(activity);
         S_HANDLER.removeCallbacks(S_LOCK_RUNNABLE);
 
         Activity previous = currentActivity.get();
@@ -105,6 +112,10 @@ public final class AppLockGate {
         if (activity == null) {
             return;
         }
+        // Remove this activity's entry on EVERY path, before any early return, so a
+        // rotation or our own authentication window cannot leave the set non-empty
+        // forever and keep the lock from ever re-arming.
+        resumedActivities.remove(activity);
         if (promptActive) {
             // The pause was caused by our own authentication window.
             return;
@@ -113,9 +124,7 @@ public final class AppLockGate {
             // Rotation is not a trip to the background.
             return;
         }
-        resumedActivities--;
-        if (resumedActivities <= 0) {
-            resumedActivities = 0;
+        if (resumedActivities.isEmpty()) {
             backgroundAt = SystemClock.elapsedRealtime();
             S_HANDLER.postDelayed(S_LOCK_RUNNABLE, 1000L);
         }
