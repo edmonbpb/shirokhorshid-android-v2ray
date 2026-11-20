@@ -12,6 +12,10 @@ For the official Psiphon application, visit: https://psiphon.ca
 
 Shir o Khorshid is a community-driven, modded build of the Psiphon open-source client. It adds extra controls and settings to give users more flexibility over their connection. Based on [Psiphon's open-source Android client](https://github.com/Psiphon-Inc/psiphon-android).
 
+## Why this project matters
+
+Shir o Khorshid was developed to help people stay connected when internet access becomes difficult, restricted, or disrupted—especially during war, crises, or heavy censorship. Its purpose is to support access to the open internet so users can reach vital information and stay in touch with friends and family when it matters most.
+
 ## Latest build
 
 | | |
