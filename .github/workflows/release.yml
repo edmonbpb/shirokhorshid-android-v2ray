@@ -1,0 +1,33 @@
+name: Release on tag
+
+# Publishes a release whenever a version tag (vYYYY.MM.DD) is pushed.
+#
+# This workflow deliberately contains no build steps of its own: it calls
+# build.yml, the same pipeline the manual "Build & Release" run uses, so a tag
+# build and a hand-started build can never drift apart and the expensive
+# tunnel-core AAR step is never duplicated.
+#
+# Required repository secrets (the build cannot produce an APK without them):
+#   PSIPHON_PROPAGATION_CHANNEL_ID, PSIPHON_SPONSOR_ID, MAXMIND_LICENSE_KEY,
+#   FETCH_SERVER_LIST_SCRIPT, PSIPHON_REMOTE_SERVER_LIST_URLS_JSON,
+#   PSIPHON_REMOTE_SERVER_LIST_SIGNATURE_PUBLIC_KEY, and the remaining
+#   PSIPHON_* values build.gradle reads. See the "Build APK" job in build.yml.
+#
+# Optional signing secrets: KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS,
+# KEY_PASSWORD. When they are absent the APK is signed with a throwaway debug
+# key and the release notes say so explicitly.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    permissions:
+      contents: write
+    uses: ./.github/workflows/build.yml
+    secrets: inherit

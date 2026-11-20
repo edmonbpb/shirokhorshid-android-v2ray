@@ -11,6 +11,18 @@ on:
         description: 'Tunnel-core branch/tag/commit to build AAR from'
         type: string
         default: 'shirokhorshid'
+  # Called by release.yml when a vYYYY.MM.DD tag is pushed. Same pipeline, so a
+  # tag build and a manual build can never drift apart.
+  workflow_call:
+    inputs:
+      clean_build:
+        description: 'Clean build (slower but ensures fresh state)'
+        type: boolean
+        default: true
+      tunnel_core_ref:
+        description: 'Tunnel-core branch/tag/commit to build AAR from'
+        type: string
+        default: 'shirokhorshid'
 
 permissions:
   contents: write
@@ -146,6 +158,10 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: cimg/android:2024.01.1-ndk
+    outputs:
+      release_tag: ${{ steps.version.outputs.release_tag }}
+      calver: ${{ steps.version.outputs.calver }}
+      debug_signed: ${{ steps.signing.outputs.debug_signed }}
 
     steps:
       - name: Checkout
@@ -207,27 +223,66 @@ jobs:
           PSIPHON_REMOTE_SERVER_LIST_SIGNATURE_PUBLIC_KEY: ${{ secrets.PSIPHON_REMOTE_SERVER_LIST_SIGNATURE_PUBLIC_KEY }}
           PSIPHON_REMOTE_SERVER_LIST_URLS_JSON: ${{ secrets.PSIPHON_REMOTE_SERVER_LIST_URLS_JSON }}
 
+      # app/build.gradle requires signing.properties even for assembleRelease, so
+      # this step always writes one. When all four release secrets are present the
+      # APK is signed with the real release keystore; otherwise a throwaway debug
+      # key is generated so a tag push still yields an installable APK, and the
+      # release notes state plainly that it is debug-signed.
       - name: Set up signing
+        id: signing
         run: |
-          echo "$KEYSTORE_B64" | base64 -d > release.keystore
-          printf 'STORE_FILE=../release.keystore\n' > signing.properties
-          printf 'STORE_PASSWORD=%s\n' "$STORE_PASSWORD" >> signing.properties
-          printf 'KEY_ALIAS=%s\n' "$KEY_ALIAS" >> signing.properties
-          printf 'KEY_PASSWORD=%s\n' "$KEY_PASSWORD" >> signing.properties
+          if [ -n "${KEYSTORE_B64:-}" ] && [ -n "${STORE_PASSWORD:-}" ] && \
+             [ -n "${KEY_ALIAS:-}" ] && [ -n "${KEY_PASSWORD:-}" ]; then
+            printf '%s' "$KEYSTORE_B64" | base64 -d > release.keystore
+            printf 'STORE_FILE=../release.keystore\n' > signing.properties
+            printf 'STORE_PASSWORD=%s\n' "$STORE_PASSWORD" >> signing.properties
+            printf 'KEY_ALIAS=%s\n' "$KEY_ALIAS" >> signing.properties
+            printf 'KEY_PASSWORD=%s\n' "$KEY_PASSWORD" >> signing.properties
+            echo "debug_signed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Release signing secrets are not configured; signing with a throwaway debug key."
+            keytool -genkeypair -v \
+              -keystore release.keystore \
+              -storetype PKCS12 \
+              -storepass debugkeystore \
+              -keypass debugkeystore \
+              -alias debugkey \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=ShirOKhorshid Debug, O=ShirOKhorshid, C=IR"
+            printf 'STORE_FILE=../release.keystore\n' > signing.properties
+            printf 'STORE_PASSWORD=debugkeystore\n' >> signing.properties
+            printf 'KEY_ALIAS=debugkey\n' >> signing.properties
+            printf 'KEY_PASSWORD=debugkeystore\n' >> signing.properties
+            echo "debug_signed=true" >> "$GITHUB_OUTPUT"
+          fi
         env:
           KEYSTORE_B64: ${{ secrets.KEYSTORE_BASE64 }}
           STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
+      # A tag build releases exactly the tag that triggered it; a manual run keeps
+      # the date-SHA tag so hand-started builds never collide with a version tag.
+      # GITHUB_REF_NAME is read from the environment rather than interpolated, so
+      # a crafted tag name cannot reach the shell as code.
       - name: Set version info
         id: version
         run: |
-          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          CALVER=$(date -u +%Y.%m.%d)
+          SHORT_SHA=$(printf '%s' "$GITHUB_SHA" | cut -c1-7)
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            TAG="$GITHUB_REF_NAME"
+            if ! printf '%s' "$TAG" | grep -Eq '^v[0-9]{4}\.(0[1-9]|1[0-2])\.(0[1-9]|[12][0-9]|3[01])$'; then
+              echo "::error::tag '$TAG' does not match vYYYY.MM.DD"
+              exit 1
+            fi
+            CALVER="${TAG#v}"
+          else
+            CALVER=$(date -u +%Y.%m.%d)
+            TAG="v${CALVER}-${SHORT_SHA}"
+          fi
           echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
           echo "calver=$CALVER" >> "$GITHUB_OUTPUT"
-          echo "tag=v${CALVER}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "release_tag=$TAG" >> "$GITHUB_OUTPUT"
 
       # Keyed on the build script, so changing the pinned upstream commit or the
       # link flags rebuilds rather than restoring a stale AAR.
@@ -299,38 +354,42 @@ jobs:
         with:
           name: shirokhorshid-apk
 
-      - name: Set version info
-        id: version
-        run: |
-          CALVER=$(date -u +%Y.%m.%d)
-          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          echo "calver=$CALVER" >> "$GITHUB_OUTPUT"
-          echo "tag=v${CALVER}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
-
       - name: Prepare release assets
+        env:
+          CALVER: ${{ needs.build-apk.outputs.calver }}
+          DEBUG_SIGNED: ${{ needs.build-apk.outputs.debug_signed }}
         run: |
-          mv ShirOKhorshid-release.apk "ShirOKhorshid-${{ steps.version.outputs.calver }}.apk"
-          APK="ShirOKhorshid-${{ steps.version.outputs.calver }}.apk"
+          APK="ShirOKhorshid-$CALVER.apk"
+          mv ShirOKhorshid-release.apk "$APK"
           SHA256=$(sha256sum "$APK" | cut -d' ' -f1)
           MD5=$(md5sum "$APK" | cut -d' ' -f1)
           echo "::notice::SHA-256: $SHA256"
           echo "::notice::MD5: $MD5"
-          echo "### Checksums" > checksums.txt
-          echo '```' >> checksums.txt
-          echo "SHA-256: $SHA256" >> checksums.txt
-          echo "MD5:     $MD5" >> checksums.txt
-          echo '```' >> checksums.txt
-          echo "" >> checksums.txt
-          echo "Built from commit ${{ github.sha }}" >> checksums.txt
+          {
+            echo "### Checksums"
+            echo '```'
+            echo "SHA-256: $SHA256"
+            echo "MD5:     $MD5"
+            echo '```'
+            echo
+            echo "Built from commit $GITHUB_SHA"
+            if [ "$DEBUG_SIGNED" = "true" ]; then
+              echo
+              echo "> **Note:** this APK is signed with a throwaway debug key because no release keystore is configured. Install it for testing; do not distribute it as an official build."
+            fi
+          } > checksums.txt
 
+      # No --clobber: an existing release for this tag is an error, not something
+      # to silently overwrite.
       - name: Create release
-        run: |
-          APK="ShirOKhorshid-${{ steps.version.outputs.calver }}.apk"
-          gh release create "${{ steps.version.outputs.tag }}" \
-            "$APK" \
-            --repo "${{ github.repository }}" \
-            --title "ShirOKhorshid ${{ steps.version.outputs.calver }}" \
-            --notes-file checksums.txt \
-            --latest
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.build-apk.outputs.release_tag }}
+          CALVER: ${{ needs.build-apk.outputs.calver }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            "ShirOKhorshid-$CALVER.apk" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "ShirOKhorshid $CALVER" \
+            --notes-file checksums.txt \
+            --latest
